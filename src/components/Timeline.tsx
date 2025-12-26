@@ -33,7 +33,7 @@ export function Timeline() {
   };
 
   const handleAddSlice = () => {
-    addSlice(`Time ${slices.length}`, currentSliceIndex);
+    addSlice(`${t('time')} ${slices.length}`, currentSliceIndex);
   };
 
   return (
@@ -59,7 +59,7 @@ export function Timeline() {
       </div>
 
       <div className="timeline-label">
-        {currentSlice?.label || t('noSlice')}
+        {currentSlice?.label === 'Initial State' ? t('initialState') : (currentSlice?.label || t('noSlice'))}
         <span style={{ color: '#64748b', marginLeft: '8px' }}>
           ({currentSliceIndex + 1}/{slices.length})
         </span>

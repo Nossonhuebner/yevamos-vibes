@@ -92,6 +92,11 @@ export const translations = {
     language: 'Language',
     english: 'English',
     hebrew: 'Hebrew',
+
+    // Share
+    copyLink: 'Copy Link',
+    linkCopied: 'Link copied to clipboard!',
+    loadedFromLink: 'Graph loaded from shared link',
   },
 
   he: {
@@ -185,6 +190,11 @@ export const translations = {
     language: 'שפה',
     english: 'אנגלית',
     hebrew: 'עברית',
+
+    // Share
+    copyLink: 'העתק קישור',
+    linkCopied: 'הקישור הועתק!',
+    loadedFromLink: 'הגרף נטען מקישור משותף',
   },
 } as const;
 

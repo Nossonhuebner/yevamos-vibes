@@ -8,7 +8,8 @@ import { SelectionBox } from './components/SelectionBox';
 import { AddPersonModal } from './components/AddPersonModal';
 import { EditDescriptionModal } from './components/EditDescriptionModal';
 import { useGraphStore, useCurrentResolvedState } from './store/graphStore';
-import { loadFromLocalStorage, saveToLocalStorage } from './utils/persistence';
+import { loadFromLocalStorage, saveToLocalStorage, getGraphFromUrl, clearUrlData } from './utils/persistence';
+import { preloadEmojiTextures } from './utils/emojiTextures';
 import { isPersonDead } from './utils/deltaResolver';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useTranslation } from './hooks/useTranslation';
@@ -59,14 +60,14 @@ function App() {
   }>({ isOpen: false, position: { x: 0, y: 0 }, sliceIndex: 0, currentLabel: '' });
 
   // Toast notification state
-  const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: '', visible: false });
+  const [toast, setToast] = useState<{ message: string; visible: boolean; type: 'error' | 'info' }>({ message: '', visible: false, type: 'error' });
   const toastTimeoutRef = useRef<number | null>(null);
 
-  const showToast = useCallback((message: string) => {
+  const showToast = useCallback((message: string, type: 'error' | 'info' = 'error') => {
     if (toastTimeoutRef.current) {
       clearTimeout(toastTimeoutRef.current);
     }
-    setToast({ message, visible: true });
+    setToast({ message, visible: true, type });
     toastTimeoutRef.current = window.setTimeout(() => {
       setToast(prev => ({ ...prev, visible: false }));
     }, 3000);
@@ -100,13 +101,31 @@ function App() {
     }
   }, [finishSelectionBox]);
 
-  // Load from localStorage on mount
+  // Load from URL or localStorage on mount, and preload emoji textures
+  const hasLoadedRef = useRef(false);
   useEffect(() => {
+    if (hasLoadedRef.current) return;
+    hasLoadedRef.current = true;
+
+    // Preload emoji textures in the background
+    preloadEmojiTextures();
+
+    // First, check if there's graph data in the URL
+    const urlGraph = getGraphFromUrl();
+    if (urlGraph) {
+      loadGraph(urlGraph);
+      clearUrlData(); // Remove the data from URL to keep it clean
+      showToast(t('loadedFromLink'), 'info');
+      return;
+    }
+
+    // Otherwise, load from localStorage
     const saved = loadFromLocalStorage();
     if (saved) {
       loadGraph(saved);
     }
-  }, [loadGraph]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Auto-save to localStorage on changes
   useEffect(() => {
@@ -387,7 +406,7 @@ function App() {
             bottom: '80px',
             left: '50%',
             transform: 'translateX(-50%)',
-            backgroundColor: '#ef4444',
+            backgroundColor: toast.type === 'error' ? '#a65d57' : '#7c9885',
             color: '#fff',
             padding: '12px 24px',
             borderRadius: '8px',

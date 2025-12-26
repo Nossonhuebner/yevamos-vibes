@@ -5,8 +5,9 @@ import * as THREE from 'three';
 import { Person } from '@/types';
 import { useGraphStore } from '@/store/graphStore';
 import { isPersonDead } from '@/utils/deltaResolver';
-import { getPersonEmoji } from '@/utils/emojiUtils';
+import { getPersonEmojiChar } from '@/utils/emojiTextures';
 import { isNodeHighlightedAsNew, isNodeHighlightedAsDead } from '@/utils/sliceDelta';
+import { EmojiSprite } from './EmojiSprite';
 
 interface PersonNodeProps {
   person: Person;
@@ -60,8 +61,8 @@ export function PersonNode({ person, sliceIndex, isCurrentSlice }: PersonNodePro
 
   // Node colors: use person's assigned color, adjusted for state
   const baseColor = isDead ? '#6b7280' : person.color;
-  const color = isSelected ? '#fbbf24' : hovered ? '#60a5fa' : baseColor;
-  const emoji = getPersonEmoji(person.id, person.gender, isDead);
+  const color = isSelected ? '#7c9885' : hovered ? '#8a8a8a' : baseColor;
+  const emoji = getPersonEmojiChar(person.id, person.gender);
 
   // Check if this is a group drag (multiple nodes selected including this one)
   const isGroupDrag = isSelected && selectedNodeIds.length > 1;
@@ -245,9 +246,9 @@ export function PersonNode({ person, sliceIndex, isCurrentSlice }: PersonNodePro
         <meshStandardMaterial
           color={color}
           emissive={
-            isHighlightedAsNew ? '#22c55e' :  // Green glow for new nodes
-            isHighlightedAsDead ? '#ef4444' :  // Red glow for death highlight
-            isSelected ? '#fbbf24' : '#000000'
+            isHighlightedAsNew ? '#5fa052' :  // Green glow for new nodes
+            isHighlightedAsDead ? '#a65d57' :  // Red glow for death highlight
+            isSelected ? '#7c9885' : '#000000'
           }
           emissiveIntensity={
             isHighlightedAsNew || isHighlightedAsDead ? glowIntensity :
@@ -259,21 +260,18 @@ export function PersonNode({ person, sliceIndex, isCurrentSlice }: PersonNodePro
       </RoundedBox>
 
       {/* Person emoji on the node */}
-      <Text
+      <EmojiSprite
+        emoji={emoji}
         position={[0, 0, 0.1]}
-        fontSize={0.35}
-        color={isDead ? '#4b5563' : '#ffffff'}
-        anchorX="center"
-        anchorY="middle"
-      >
-        {emoji}
-      </Text>
+        size={0.45}
+        opacity={isDead ? 0.4 : 1}
+      />
 
       {/* Selection ring */}
       {isSelected && (
         <mesh position={[0, 0, 0.01]}>
           <ringGeometry args={[0.4, 0.5, 32]} />
-          <meshBasicMaterial color="#fbbf24" transparent opacity={0.5} />
+          <meshBasicMaterial color="#7c9885" transparent opacity={0.5} />
         </mesh>
       )}
 
@@ -298,7 +296,7 @@ export function PersonNode({ person, sliceIndex, isCurrentSlice }: PersonNodePro
           >
             <circleGeometry args={[0.15, 16]} />
             <meshStandardMaterial
-              color={handleHovered || isDragging ? '#60a5fa' : '#475569'}
+              color={handleHovered || isDragging ? '#7c9885' : '#2a2f3a'}
               transparent
               opacity={0.9}
             />

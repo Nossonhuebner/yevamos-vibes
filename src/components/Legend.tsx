@@ -73,7 +73,7 @@ export function Legend() {
               <span style={{ color: '#64748b', fontSize: '9px' }}>{t('clickNode')}</span>
               <span>{t('selectForRelationship')}</span>
             </div>
-            <div className="legend-item" style={{ gap: '4px', fontSize: '10px', color: '#3b82f6' }}>
+            <div className="legend-item" style={{ gap: '4px', fontSize: '10px', color: '#7c9885' }}>
               <span style={{ fontSize: '9px' }}>{t('rightClick')}</span>
               <span>{t('optionsMenu')}</span>
             </div>

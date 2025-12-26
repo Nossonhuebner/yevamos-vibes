@@ -5,16 +5,18 @@
 }
 
 :root {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-tertiary: #334155;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --accent: #3b82f6;
-  --accent-hover: #2563eb;
-  --border: #475569;
-  --success: #22c55e;
-  --danger: #ef4444;
+  --bg-primary: #0c0f14;
+  --bg-secondary: #151922;
+  --bg-tertiary: #1f242e;
+  --text-primary: #e8e6e3;
+  --text-secondary: #8a8a8a;
+  --accent: #7c9885;
+  --accent-hover: #8faa97;
+  --accent-muted: rgba(124, 152, 133, 0.15);
+  --border: #2a2f3a;
+  --success: #5fa052;
+  --danger: #a65d57;
+  --danger-hover: #8b4d48;
 }
 
 html, body {
@@ -162,11 +164,11 @@ body {
 
 .btn-danger {
   background: var(--danger);
-  color: white;
+  color: var(--text-primary);
 }
 
 .btn-danger:hover {
-  background: #dc2626;
+  background: var(--danger-hover);
 }
 
 .btn-sm {

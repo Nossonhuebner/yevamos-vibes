@@ -4,28 +4,26 @@ export interface Person {
   name: string;
   gender: 'male' | 'female';
   position: { x: number; y: number };
-  deathSliceIndex?: number; // Slice index where this person died (undefined = alive)
   color: string; // Random color assigned at creation for visual identification
+  // Temporal metadata (set when introduced/marked dead)
+  introducedSliceIndex: number; // Slice where this person first appears
+  deathSliceIndex?: number; // Slice index where this person died (undefined = alive)
 }
 
-// Color palette for node colors (distinct, visually appealing)
+// Color palette for node colors - bright, vibrant colors
 export const NODE_COLOR_PALETTE = [
-  '#ef4444', // red
-  '#f97316', // orange
-  '#f59e0b', // amber
-  '#eab308', // yellow
-  '#84cc16', // lime
-  '#22c55e', // green
-  '#14b8a6', // teal
-  '#06b6d4', // cyan
-  '#0ea5e9', // sky
-  '#3b82f6', // blue
-  '#6366f1', // indigo
-  '#8b5cf6', // violet
-  '#a855f7', // purple
-  '#d946ef', // fuchsia
-  '#ec4899', // pink
-  '#f43f5e', // rose
+  '#e74c3c', // bright red
+  '#27ae60', // bright green
+  '#3498db', // bright blue
+  '#9b59b6', // bright purple
+  '#e67e22', // bright orange
+  '#1abc9c', // bright teal
+  '#f39c12', // bright gold
+  '#2980b9', // ocean blue
+  '#8e44ad', // deep purple
+  '#16a085', // sea green
+  '#c0392b', // dark red
+  '#2ecc71', // emerald
 ];
 
 export function getRandomNodeColor(): string {
@@ -49,26 +47,29 @@ export interface Relationship {
   label?: string;
   childIds?: string[]; // For marriage/unmarried-relations: IDs of children connected to this relationship
   hidden?: boolean; // If true, don't render this edge (used for parent-child edges that are part of a T-shape)
+  introducedSliceIndex: number; // Slice where this relationship was created
 }
 
-// Delta operations for temporal state management
-export type DeltaOperation =
-  | { op: 'addNode'; node: Person }
-  | { op: 'removeNode'; nodeId: string }
-  | { op: 'updateNode'; nodeId: string; changes: Partial<Omit<Person, 'id'>> }
-  | { op: 'markDead'; nodeId: string; sliceIndex: number } // Mark a person as dead at this slice
-  | { op: 'addEdge'; edge: Relationship }
-  | { op: 'removeEdge'; edgeId: string }
-  | { op: 'updateEdge'; edgeId: string; changes: Partial<Omit<Relationship, 'id'>> };
+// Temporal events - things that happen at specific points in time
+export type TemporalEvent =
+  | { type: 'addNode'; nodeId: string } // Node is introduced at this slice
+  | { type: 'death'; nodeId: string } // Node dies at this slice
+  | { type: 'addEdge'; edgeId: string } // Edge is created at this slice
+  | { type: 'updateEdge'; edgeId: string; changes: Partial<Omit<Relationship, 'id' | 'introducedSliceIndex'>> }
+  | { type: 'removeEdge'; edgeId: string };
 
 export interface TimeSlice {
   id: string;
   label: string;
   timestamp?: number;
-  deltas: DeltaOperation[];
+  events: TemporalEvent[];
 }
 
 export interface TemporalGraph {
+  // Global definitions - single source of truth for static properties
+  nodes: Record<string, Person>;
+  edges: Record<string, Relationship>;
+  // Timeline of events
   slices: TimeSlice[];
   metadata: {
     title: string;
@@ -76,7 +77,7 @@ export interface TemporalGraph {
   };
 }
 
-// Resolved state at a given time slice
+// Resolved state at a given time slice (computed from global + events)
 export interface ResolvedGraphState {
   nodes: Map<string, Person>;
   edges: Map<string, Relationship>;
@@ -90,13 +91,13 @@ export interface RelationshipStyle {
 }
 
 export const RELATIONSHIP_STYLES: Record<RelationshipType, RelationshipStyle> = {
-  'marriage': { color: '#22c55e', lineStyle: 'solid', lineWidth: 2 },
-  'divorce': { color: '#ef4444', lineStyle: 'dashed', lineWidth: 2 },
-  'yibum': { color: '#f97316', lineStyle: 'solid', lineWidth: 3 },
-  'chalitzah': { color: '#8b5cf6', lineStyle: 'dashed', lineWidth: 2 },
-  'parent-child': { color: '#3b82f6', lineStyle: 'solid', lineWidth: 2 },
-  'sibling': { color: '#ec4899', lineStyle: 'solid', lineWidth: 1 },
-  'unmarried-relations': { color: '#facc15', lineStyle: 'dotted', lineWidth: 2 },
+  'marriage': { color: '#5fa052', lineStyle: 'solid', lineWidth: 2 },
+  'divorce': { color: '#a65d57', lineStyle: 'dashed', lineWidth: 2 },
+  'yibum': { color: '#d4a054', lineStyle: 'solid', lineWidth: 3 },
+  'chalitzah': { color: '#8b7ba8', lineStyle: 'dashed', lineWidth: 2 },
+  'parent-child': { color: '#7c9885', lineStyle: 'solid', lineWidth: 2 },
+  'sibling': { color: '#a08b7f', lineStyle: 'solid', lineWidth: 1 },
+  'unmarried-relations': { color: '#c4a86c', lineStyle: 'dotted', lineWidth: 2 },
 };
 
 export const RELATIONSHIP_LABELS: Record<RelationshipType, string> = {
@@ -108,3 +109,49 @@ export const RELATIONSHIP_LABELS: Record<RelationshipType, string> = {
   'sibling': 'Sibling',
   'unmarried-relations': 'Unmarried Relations',
 };
+
+// ============================================================
+// Legacy types for backwards compatibility with old saved files
+// ============================================================
+export type LegacyDeltaOperation =
+  | { op: 'addNode'; node: LegacyPerson }
+  | { op: 'removeNode'; nodeId: string }
+  | { op: 'updateNode'; nodeId: string; changes: Partial<Omit<LegacyPerson, 'id'>> }
+  | { op: 'markDead'; nodeId: string; sliceIndex: number }
+  | { op: 'addEdge'; edge: LegacyRelationship }
+  | { op: 'removeEdge'; edgeId: string }
+  | { op: 'updateEdge'; edgeId: string; changes: Partial<Omit<LegacyRelationship, 'id'>> };
+
+export interface LegacyPerson {
+  id: string;
+  name: string;
+  gender: 'male' | 'female';
+  position: { x: number; y: number };
+  deathSliceIndex?: number;
+  color: string;
+}
+
+export interface LegacyRelationship {
+  id: string;
+  type: RelationshipType;
+  sourceId: string;
+  targetId: string;
+  label?: string;
+  childIds?: string[];
+  hidden?: boolean;
+}
+
+export interface LegacyTimeSlice {
+  id: string;
+  label: string;
+  timestamp?: number;
+  deltas: LegacyDeltaOperation[];
+}
+
+export interface LegacyTemporalGraph {
+  slices: LegacyTimeSlice[];
+  metadata: {
+    title: string;
+    description?: string;
+  };
+}

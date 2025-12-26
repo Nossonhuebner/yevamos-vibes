@@ -18,18 +18,18 @@ interface TimeSlicePlaneProps {
 }
 
 export function TimeSlicePlane({
-  slice: _slice,
+  slice,
   sliceIndex,
   resolvedState,
   zPosition,
   isCurrentSlice,
 }: TimeSlicePlaneProps) {
-  void _slice; // Prop passed but not currently used
   const setCurrentSlice = useGraphStore((state) => state.setCurrentSlice);
   const openContextMenu = useGraphStore((state) => state.openContextMenu);
   const currentSliceIndex = useGraphStore((state) => state.currentSliceIndex);
   const clearNodeSelection = useGraphStore((state) => state.clearNodeSelection);
   const viewMode = useGraphStore((state) => state.viewMode);
+  const isDraggingNode = useGraphStore((state) => state.isDraggingNode);
 
   // Calculate opacity based on view mode and distance from current slice
   const planeOpacity = useMemo(() => {
@@ -45,14 +45,14 @@ export function TimeSlicePlane({
 
   // Border color also adjusts in Focus mode
   const borderColor = useMemo(() => {
-    if (isCurrentSlice) return '#3b82f6';
+    if (isCurrentSlice) return '#7c9885';
     if (viewMode === 'focus') {
       const distance = Math.abs(sliceIndex - currentSliceIndex);
       // Fade border color based on distance
       const alpha = Math.max(0.2, 1 - distance * 0.2);
-      return `rgba(71, 85, 105, ${alpha})`;
+      return `rgba(42, 47, 58, ${alpha})`;
     }
-    return '#475569';
+    return '#2a2f3a';
   }, [viewMode, isCurrentSlice, sliceIndex, currentSliceIndex]);
 
   // Create border points for the vertical plane (XY plane) - doubled size
@@ -73,6 +73,10 @@ export function TimeSlicePlane({
   const edges = getEdgesArray(resolvedState);
 
   const handlePlaneClick = () => {
+    // Don't change slice if we're currently dragging a node
+    // (the click event can fire when releasing the mouse after a drag)
+    if (isDraggingNode) return;
+
     setCurrentSlice(sliceIndex);
     // Clear any node selection when clicking on the slice background
     clearNodeSelection();
@@ -108,7 +112,7 @@ export function TimeSlicePlane({
       >
         <planeGeometry args={[32, 32]} />
         <meshStandardMaterial
-          color={isCurrentSlice ? '#3b82f6' : '#1e293b'}
+          color={isCurrentSlice ? '#7c9885' : '#151922'}
           transparent
           opacity={planeOpacity}
           side={THREE.DoubleSide}
@@ -126,11 +130,25 @@ export function TimeSlicePlane({
       <Text
         position={[15.5, 15.5, 0.1]}
         fontSize={0.5}
-        color={isCurrentSlice ? '#3b82f6' : '#64748b'}
+        color={isCurrentSlice ? '#7c9885' : '#5a5a5a'}
         anchorX="right"
       >
         t={sliceIndex}
       </Text>
+
+      {/* Slice label - bottom center */}
+      {slice.label && (
+        <Text
+          position={[0, -15, 0.1]}
+          fontSize={0.6}
+          color={isCurrentSlice ? '#e8e6e3' : '#5a5a5a'}
+          anchorX="center"
+          anchorY="top"
+          maxWidth={30}
+        >
+          {slice.label}
+        </Text>
+      )}
 
       {/* Render edges first (so they appear behind nodes) */}
       {(() => {

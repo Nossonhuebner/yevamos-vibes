@@ -1,67 +1,50 @@
-import { DeltaOperation, Person, Relationship, ResolvedGraphState, TimeSlice } from '@/types';
+import { Person, Relationship, ResolvedGraphState, TemporalGraph } from '@/types';
 
 /**
- * Apply a single delta operation to a graph state
+ * Resolve the graph state at a given slice index.
+ *
+ * The new model is simpler:
+ * - Nodes exist in graph.nodes with their static properties
+ * - Edges exist in graph.edges with their base properties
+ * - Events in slices track: when nodes appear, when they die, when edges are added/modified
+ *
+ * To resolve state at slice N:
+ * 1. Include all nodes with introducedSliceIndex <= N
+ * 2. Include all edges with introducedSliceIndex <= N
+ * 3. Apply any edge updates from events up to slice N
  */
-function applyDelta(state: ResolvedGraphState, delta: DeltaOperation): void {
-  switch (delta.op) {
-    case 'addNode':
-      state.nodes.set(delta.node.id, { ...delta.node });
-      break;
-    case 'removeNode':
-      state.nodes.delete(delta.nodeId);
-      // Also remove any edges connected to this node
-      for (const [edgeId, edge] of state.edges) {
-        if (edge.sourceId === delta.nodeId || edge.targetId === delta.nodeId) {
-          state.edges.delete(edgeId);
-        }
-      }
-      break;
-    case 'updateNode': {
-      const node = state.nodes.get(delta.nodeId);
-      if (node) {
-        state.nodes.set(delta.nodeId, { ...node, ...delta.changes });
-      }
-      break;
-    }
-    case 'markDead': {
-      const node = state.nodes.get(delta.nodeId);
-      if (node) {
-        state.nodes.set(delta.nodeId, { ...node, deathSliceIndex: delta.sliceIndex });
-      }
-      break;
-    }
-    case 'addEdge':
-      state.edges.set(delta.edge.id, { ...delta.edge });
-      break;
-    case 'removeEdge':
-      state.edges.delete(delta.edgeId);
-      break;
-    case 'updateEdge': {
-      const edge = state.edges.get(delta.edgeId);
-      if (edge) {
-        state.edges.set(delta.edgeId, { ...edge, ...delta.changes });
-      }
-      break;
-    }
-  }
-}
-
-/**
- * Resolve the graph state at a given slice index by applying all deltas
- * from slice 0 up to and including the target slice
- */
-export function resolveGraphAtSlice(slices: TimeSlice[], targetIndex: number): ResolvedGraphState {
+export function resolveGraphAtSlice(graph: TemporalGraph, targetIndex: number): ResolvedGraphState {
   const state: ResolvedGraphState = {
     nodes: new Map(),
     edges: new Map(),
   };
 
-  // Apply all deltas from slice 0 to targetIndex
-  for (let i = 0; i <= Math.min(targetIndex, slices.length - 1); i++) {
-    const slice = slices[i];
-    for (const delta of slice.deltas) {
-      applyDelta(state, delta);
+  // Add all nodes that have been introduced by this slice
+  for (const [id, node] of Object.entries(graph.nodes)) {
+    if (node.introducedSliceIndex <= targetIndex) {
+      state.nodes.set(id, { ...node });
+    }
+  }
+
+  // Add all edges that have been introduced by this slice
+  for (const [id, edge] of Object.entries(graph.edges)) {
+    if (edge.introducedSliceIndex <= targetIndex) {
+      state.edges.set(id, { ...edge });
+    }
+  }
+
+  // Apply edge updates from events up to targetIndex
+  for (let i = 0; i <= Math.min(targetIndex, graph.slices.length - 1); i++) {
+    const slice = graph.slices[i];
+    for (const event of slice.events) {
+      if (event.type === 'updateEdge') {
+        const edge = state.edges.get(event.edgeId);
+        if (edge) {
+          state.edges.set(event.edgeId, { ...edge, ...event.changes });
+        }
+      } else if (event.type === 'removeEdge') {
+        state.edges.delete(event.edgeId);
+      }
     }
   }
 
@@ -71,23 +54,11 @@ export function resolveGraphAtSlice(slices: TimeSlice[], targetIndex: number): R
 /**
  * Resolve graph states for all slices (useful for 3D view)
  */
-export function resolveAllSlices(slices: TimeSlice[]): ResolvedGraphState[] {
+export function resolveAllSlices(graph: TemporalGraph): ResolvedGraphState[] {
   const results: ResolvedGraphState[] = [];
-  const state: ResolvedGraphState = {
-    nodes: new Map(),
-    edges: new Map(),
-  };
 
-  for (let i = 0; i < slices.length; i++) {
-    const slice = slices[i];
-    for (const delta of slice.deltas) {
-      applyDelta(state, delta);
-    }
-    // Deep clone the current state
-    results.push({
-      nodes: new Map(Array.from(state.nodes).map(([k, v]) => [k, { ...v }])),
-      edges: new Map(Array.from(state.edges).map(([k, v]) => [k, { ...v }])),
-    });
+  for (let i = 0; i < graph.slices.length; i++) {
+    results.push(resolveGraphAtSlice(graph, i));
   }
 
   return results;
@@ -105,20 +76,6 @@ export function getNodesArray(state: ResolvedGraphState): Person[] {
  */
 export function getEdgesArray(state: ResolvedGraphState): Relationship[] {
   return Array.from(state.edges.values());
-}
-
-/**
- * Create a position update delta that will propagate to subsequent slices
- */
-export function createPositionUpdateDelta(
-  nodeId: string,
-  position: { x: number; y: number }
-): DeltaOperation {
-  return {
-    op: 'updateNode',
-    nodeId,
-    changes: { position },
-  };
 }
 
 /**

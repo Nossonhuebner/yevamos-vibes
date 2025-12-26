@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { DeltaOperation, Person, Relationship, ResolvedGraphState, TemporalGraph, TimeSlice, getRandomNodeColor } from '@/types';
+import { Person, Relationship, ResolvedGraphState, TemporalGraph, TimeSlice, getRandomNodeColor } from '@/types';
 import { generateId, resolveAllSlices } from '@/utils/deltaResolver';
 import { Language } from '@/i18n/translations';
 
@@ -83,22 +83,19 @@ interface GraphStore {
   removeSlice: (index: number) => void;
   updateSliceLabel: (index: number, label: string) => void;
 
-  // Delta actions
-  addDelta: (sliceIndex: number, delta: DeltaOperation) => void;
-  removeDelta: (sliceIndex: number, deltaIndex: number) => void;
-
-  // Convenience actions for common operations
-  addPerson: (person: Omit<Person, 'id' | 'deathSliceIndex' | 'color'>) => string;
+  // Node actions
+  addPerson: (person: Omit<Person, 'id' | 'deathSliceIndex' | 'color' | 'introducedSliceIndex'>) => string;
   markPersonDead: (nodeId: string) => void; // Mark as dead at current slice
   purgePerson: (nodeId: string) => void; // Remove from ALL slices entirely
   updatePersonPosition: (nodeId: string, position: { x: number; y: number }) => void;
   updateMultiplePositions: (updates: { nodeId: string; position: { x: number; y: number } }[]) => void;
   updatePersonName: (nodeId: string, name: string) => void;
 
-  addRelationship: (relationship: Omit<Relationship, 'id'>) => string;
+  // Edge actions
+  addRelationship: (relationship: Omit<Relationship, 'id' | 'introducedSliceIndex'>) => string;
   removeRelationship: (edgeId: string) => void;
-  updateRelationship: (edgeId: string, changes: Partial<Omit<Relationship, 'id'>>) => void;
-  addChildToRelationship: (edgeId: string, child: Omit<Person, 'id' | 'deathSliceIndex' | 'color'>) => string | null;
+  updateRelationship: (edgeId: string, changes: Partial<Omit<Relationship, 'id' | 'introducedSliceIndex'>>) => void;
+  addChildToRelationship: (edgeId: string, child: Omit<Person, 'id' | 'deathSliceIndex' | 'color' | 'introducedSliceIndex'>) => string | null;
 
   // Selection
   toggleNodeSelection: (nodeId: string) => void;
@@ -145,11 +142,13 @@ interface GraphStore {
 }
 
 const createInitialGraph = (): TemporalGraph => ({
+  nodes: {},
+  edges: {},
   slices: [
     {
       id: generateId(),
       label: 'Initial State',
-      deltas: [],
+      events: [],
     },
   ],
   metadata: {
@@ -158,8 +157,8 @@ const createInitialGraph = (): TemporalGraph => ({
   },
 });
 
-const recomputeResolvedStates = (slices: TimeSlice[]): ResolvedGraphState[] => {
-  return resolveAllSlices(slices);
+const recomputeResolvedStates = (graph: TemporalGraph): ResolvedGraphState[] => {
+  return resolveAllSlices(graph);
 };
 
 export const useGraphStore = create<GraphStore>((set, get) => ({
@@ -197,14 +196,39 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       const newSlice: TimeSlice = {
         id: generateId(),
         label,
-        deltas: [],
+        events: [],
       };
       const newSlices = [...state.graph.slices];
       newSlices.splice(insertIndex, 0, newSlice);
 
+      // Update introducedSliceIndex for any nodes/edges introduced after this point
+      const updatedNodes = { ...state.graph.nodes };
+      for (const [id, node] of Object.entries(updatedNodes)) {
+        if (node.introducedSliceIndex >= insertIndex) {
+          updatedNodes[id] = { ...node, introducedSliceIndex: node.introducedSliceIndex + 1 };
+        }
+        if (node.deathSliceIndex !== undefined && node.deathSliceIndex >= insertIndex) {
+          updatedNodes[id] = { ...updatedNodes[id], deathSliceIndex: node.deathSliceIndex + 1 };
+        }
+      }
+
+      const updatedEdges = { ...state.graph.edges };
+      for (const [id, edge] of Object.entries(updatedEdges)) {
+        if (edge.introducedSliceIndex >= insertIndex) {
+          updatedEdges[id] = { ...edge, introducedSliceIndex: edge.introducedSliceIndex + 1 };
+        }
+      }
+
+      const newGraph = {
+        ...state.graph,
+        nodes: updatedNodes,
+        edges: updatedEdges,
+        slices: newSlices,
+      };
+
       return {
-        graph: { ...state.graph, slices: newSlices },
-        resolvedStates: recomputeResolvedStates(newSlices),
+        graph: newGraph,
+        resolvedStates: recomputeResolvedStates(newGraph),
         currentSliceIndex: insertIndex,
       };
     });
@@ -213,12 +237,49 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   removeSlice: (index) => {
     set((state) => {
       if (state.graph.slices.length <= 1) return state; // Keep at least one slice
+
+      // Remove nodes/edges introduced at this slice
+      const updatedNodes = { ...state.graph.nodes };
+      const updatedEdges = { ...state.graph.edges };
+
+      for (const [id, node] of Object.entries(updatedNodes)) {
+        if (node.introducedSliceIndex === index) {
+          delete updatedNodes[id];
+        } else if (node.introducedSliceIndex > index) {
+          updatedNodes[id] = { ...node, introducedSliceIndex: node.introducedSliceIndex - 1 };
+        }
+        if (updatedNodes[id]?.deathSliceIndex !== undefined) {
+          if (updatedNodes[id].deathSliceIndex === index) {
+            // Death was at this slice, remove the death marker
+            const { deathSliceIndex, ...rest } = updatedNodes[id];
+            updatedNodes[id] = rest as Person;
+          } else if (updatedNodes[id].deathSliceIndex! > index) {
+            updatedNodes[id] = { ...updatedNodes[id], deathSliceIndex: updatedNodes[id].deathSliceIndex! - 1 };
+          }
+        }
+      }
+
+      for (const [id, edge] of Object.entries(updatedEdges)) {
+        if (edge.introducedSliceIndex === index) {
+          delete updatedEdges[id];
+        } else if (edge.introducedSliceIndex > index) {
+          updatedEdges[id] = { ...edge, introducedSliceIndex: edge.introducedSliceIndex - 1 };
+        }
+      }
+
       const newSlices = state.graph.slices.filter((_, i) => i !== index);
       const newIndex = Math.min(state.currentSliceIndex, newSlices.length - 1);
 
+      const newGraph = {
+        ...state.graph,
+        nodes: updatedNodes,
+        edges: updatedEdges,
+        slices: newSlices,
+      };
+
       return {
-        graph: { ...state.graph, slices: newSlices },
-        resolvedStates: recomputeResolvedStates(newSlices),
+        graph: newGraph,
+        resolvedStates: recomputeResolvedStates(newGraph),
         currentSliceIndex: newIndex,
       };
     });
@@ -234,171 +295,281 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     });
   },
 
-  addDelta: (sliceIndex, delta) => {
-    set((state) => {
-      const newSlices = [...state.graph.slices];
-      if (newSlices[sliceIndex]) {
-        newSlices[sliceIndex] = {
-          ...newSlices[sliceIndex],
-          deltas: [...newSlices[sliceIndex].deltas, delta],
-        };
-      }
-      return {
-        graph: { ...state.graph, slices: newSlices },
-        resolvedStates: recomputeResolvedStates(newSlices),
-      };
-    });
-  },
-
-  removeDelta: (sliceIndex, deltaIndex) => {
-    set((state) => {
-      const newSlices = [...state.graph.slices];
-      if (newSlices[sliceIndex]) {
-        const newDeltas = [...newSlices[sliceIndex].deltas];
-        newDeltas.splice(deltaIndex, 1);
-        newSlices[sliceIndex] = { ...newSlices[sliceIndex], deltas: newDeltas };
-      }
-      return {
-        graph: { ...state.graph, slices: newSlices },
-        resolvedStates: recomputeResolvedStates(newSlices),
-      };
-    });
-  },
-
   addPerson: (person) => {
     const id = generateId();
     const color = getRandomNodeColor();
-    const { currentSliceIndex, addDelta } = get();
-    addDelta(currentSliceIndex, {
-      op: 'addNode',
-      node: { ...person, id, color },
+    const { currentSliceIndex, graph } = get();
+
+    const newNode: Person = {
+      ...person,
+      id,
+      color,
+      introducedSliceIndex: currentSliceIndex,
+    };
+
+    // Add event to the slice
+    const newSlices = [...graph.slices];
+    newSlices[currentSliceIndex] = {
+      ...newSlices[currentSliceIndex],
+      events: [...newSlices[currentSliceIndex].events, { type: 'addNode', nodeId: id }],
+    };
+
+    const newGraph = {
+      ...graph,
+      nodes: { ...graph.nodes, [id]: newNode },
+      slices: newSlices,
+    };
+
+    set({
+      graph: newGraph,
+      resolvedStates: recomputeResolvedStates(newGraph),
     });
+
     return id;
   },
 
   markPersonDead: (nodeId) => {
-    const { currentSliceIndex, addDelta } = get();
-    addDelta(currentSliceIndex, { op: 'markDead', nodeId, sliceIndex: currentSliceIndex });
+    const { currentSliceIndex, graph } = get();
+    const node = graph.nodes[nodeId];
+    if (!node) return;
+
+    // Update the node's deathSliceIndex
+    const updatedNode = { ...node, deathSliceIndex: currentSliceIndex };
+
+    // Add death event to the slice
+    const newSlices = [...graph.slices];
+    newSlices[currentSliceIndex] = {
+      ...newSlices[currentSliceIndex],
+      events: [...newSlices[currentSliceIndex].events, { type: 'death', nodeId }],
+    };
+
+    const newGraph = {
+      ...graph,
+      nodes: { ...graph.nodes, [nodeId]: updatedNode },
+      slices: newSlices,
+    };
+
+    set({
+      graph: newGraph,
+      resolvedStates: recomputeResolvedStates(newGraph),
+    });
   },
 
   purgePerson: (nodeId) => {
-    // Remove the person and their edges from ALL slices
     set((state) => {
-      const newSlices = state.graph.slices.map((slice) => {
-        // Filter out any deltas that reference this node
-        const newDeltas = slice.deltas.filter((delta) => {
-          if (delta.op === 'addNode' && delta.node.id === nodeId) return false;
-          if (delta.op === 'removeNode' && delta.nodeId === nodeId) return false;
-          if (delta.op === 'updateNode' && delta.nodeId === nodeId) return false;
-          if (delta.op === 'markDead' && delta.nodeId === nodeId) return false;
-          if (delta.op === 'addEdge' && (delta.edge.sourceId === nodeId || delta.edge.targetId === nodeId)) return false;
-          if (delta.op === 'removeEdge') {
-            // Check if this edge involves the node we're purging
-            // We need to look at all slices to find the edge definition
-            for (const s of state.graph.slices) {
-              for (const d of s.deltas) {
-                if (d.op === 'addEdge' && d.edge.id === delta.edgeId) {
-                  if (d.edge.sourceId === nodeId || d.edge.targetId === nodeId) {
-                    return false;
-                  }
-                }
-              }
-            }
+      // Remove the node
+      const { [nodeId]: removed, ...remainingNodes } = state.graph.nodes;
+
+      // Remove any edges that reference this node
+      const remainingEdges: Record<string, Relationship> = {};
+      for (const [id, edge] of Object.entries(state.graph.edges)) {
+        if (edge.sourceId !== nodeId && edge.targetId !== nodeId) {
+          // Also remove this node from any childIds arrays
+          if (edge.childIds?.includes(nodeId)) {
+            remainingEdges[id] = {
+              ...edge,
+              childIds: edge.childIds.filter((cid) => cid !== nodeId),
+            };
+          } else {
+            remainingEdges[id] = edge;
           }
+        }
+      }
+
+      // Remove any events referencing this node from slices
+      const newSlices = state.graph.slices.map((slice) => ({
+        ...slice,
+        events: slice.events.filter((event) => {
+          if (event.type === 'addNode' && event.nodeId === nodeId) return false;
+          if (event.type === 'death' && event.nodeId === nodeId) return false;
           return true;
-        });
-        return { ...slice, deltas: newDeltas };
-      });
+        }),
+      }));
+
+      const newGraph = {
+        ...state.graph,
+        nodes: remainingNodes,
+        edges: remainingEdges,
+        slices: newSlices,
+      };
 
       return {
-        graph: { ...state.graph, slices: newSlices },
-        resolvedStates: recomputeResolvedStates(newSlices),
+        graph: newGraph,
+        resolvedStates: recomputeResolvedStates(newGraph),
         selectedNodeIds: state.selectedNodeIds.filter((id) => id !== nodeId),
       };
     });
   },
 
   updatePersonPosition: (nodeId, position) => {
-    // Position updates apply to ALL slices
+    // Position updates directly modify the global node definition
     set((state) => {
-      const newSlices = state.graph.slices.map((slice) => ({
-        ...slice,
-        deltas: [...slice.deltas, { op: 'updateNode' as const, nodeId, changes: { position } }],
-      }));
+      const node = state.graph.nodes[nodeId];
+      if (!node) return state;
+
+      const newGraph = {
+        ...state.graph,
+        nodes: {
+          ...state.graph.nodes,
+          [nodeId]: { ...node, position },
+        },
+      };
 
       return {
-        graph: { ...state.graph, slices: newSlices },
-        resolvedStates: recomputeResolvedStates(newSlices),
+        graph: newGraph,
+        resolvedStates: recomputeResolvedStates(newGraph),
       };
     });
   },
 
-  updateMultiplePositions: (updates: { nodeId: string; position: { x: number; y: number } }[]) => {
+  updateMultiplePositions: (updates) => {
     // Batch position updates for multiple nodes (used for group drag)
     set((state) => {
-      const newSlices = state.graph.slices.map((slice) => ({
-        ...slice,
-        deltas: [
-          ...slice.deltas,
-          ...updates.map(({ nodeId, position }) => ({
-            op: 'updateNode' as const,
-            nodeId,
-            changes: { position },
-          })),
-        ],
-      }));
+      const newNodes = { ...state.graph.nodes };
+      for (const { nodeId, position } of updates) {
+        if (newNodes[nodeId]) {
+          newNodes[nodeId] = { ...newNodes[nodeId], position };
+        }
+      }
+
+      const newGraph = {
+        ...state.graph,
+        nodes: newNodes,
+      };
 
       return {
-        graph: { ...state.graph, slices: newSlices },
-        resolvedStates: recomputeResolvedStates(newSlices),
+        graph: newGraph,
+        resolvedStates: recomputeResolvedStates(newGraph),
       };
     });
   },
 
   updatePersonName: (nodeId, name) => {
-    const { currentSliceIndex, addDelta } = get();
-    addDelta(currentSliceIndex, { op: 'updateNode', nodeId, changes: { name } });
+    // Name updates directly modify the global node definition
+    set((state) => {
+      const node = state.graph.nodes[nodeId];
+      if (!node) return state;
+
+      const newGraph = {
+        ...state.graph,
+        nodes: {
+          ...state.graph.nodes,
+          [nodeId]: { ...node, name },
+        },
+      };
+
+      return {
+        graph: newGraph,
+        resolvedStates: recomputeResolvedStates(newGraph),
+      };
+    });
   },
 
   addRelationship: (relationship) => {
     const id = generateId();
-    const { currentSliceIndex, addDelta } = get();
-    addDelta(currentSliceIndex, {
-      op: 'addEdge',
-      edge: { ...relationship, id },
+    const { currentSliceIndex, graph } = get();
+
+    const newEdge: Relationship = {
+      ...relationship,
+      id,
+      introducedSliceIndex: currentSliceIndex,
+    };
+
+    // Add event to the slice
+    const newSlices = [...graph.slices];
+    newSlices[currentSliceIndex] = {
+      ...newSlices[currentSliceIndex],
+      events: [...newSlices[currentSliceIndex].events, { type: 'addEdge', edgeId: id }],
+    };
+
+    const newGraph = {
+      ...graph,
+      edges: { ...graph.edges, [id]: newEdge },
+      slices: newSlices,
+    };
+
+    set({
+      graph: newGraph,
+      resolvedStates: recomputeResolvedStates(newGraph),
     });
+
     return id;
   },
 
   removeRelationship: (edgeId) => {
-    // Remove the relationship from ALL slices (similar to purgePerson)
     set((state) => {
-      const newSlices = state.graph.slices.map((slice) => {
-        // Filter out any deltas that reference this edge
-        const newDeltas = slice.deltas.filter((delta) => {
-          if (delta.op === 'addEdge' && delta.edge.id === edgeId) return false;
-          if (delta.op === 'removeEdge' && delta.edgeId === edgeId) return false;
-          if (delta.op === 'updateEdge' && delta.edgeId === edgeId) return false;
+      // Remove the edge from global definitions
+      const { [edgeId]: removed, ...remainingEdges } = state.graph.edges;
+
+      // Remove any events referencing this edge
+      const newSlices = state.graph.slices.map((slice) => ({
+        ...slice,
+        events: slice.events.filter((event) => {
+          if (event.type === 'addEdge' && event.edgeId === edgeId) return false;
+          if (event.type === 'updateEdge' && event.edgeId === edgeId) return false;
+          if (event.type === 'removeEdge' && event.edgeId === edgeId) return false;
           return true;
-        });
-        return { ...slice, deltas: newDeltas };
-      });
+        }),
+      }));
+
+      const newGraph = {
+        ...state.graph,
+        edges: remainingEdges,
+        slices: newSlices,
+      };
 
       return {
-        graph: { ...state.graph, slices: newSlices },
-        resolvedStates: recomputeResolvedStates(newSlices),
+        graph: newGraph,
+        resolvedStates: recomputeResolvedStates(newGraph),
         selectedEdgeId: state.selectedEdgeId === edgeId ? null : state.selectedEdgeId,
       };
     });
   },
 
   updateRelationship: (edgeId, changes) => {
-    const { currentSliceIndex, addDelta } = get();
-    addDelta(currentSliceIndex, { op: 'updateEdge', edgeId, changes });
+    const { currentSliceIndex, graph } = get();
+    const edge = graph.edges[edgeId];
+    if (!edge) return;
+
+    // For temporal changes (like type: marriage -> divorce), add an event
+    // For static changes (like childIds), update the global edge directly
+
+    // Check if this is a type change (temporal event)
+    if (changes.type && changes.type !== edge.type) {
+      // Add updateEdge event to current slice
+      const newSlices = [...graph.slices];
+      newSlices[currentSliceIndex] = {
+        ...newSlices[currentSliceIndex],
+        events: [...newSlices[currentSliceIndex].events, { type: 'updateEdge', edgeId, changes }],
+      };
+
+      const newGraph = {
+        ...graph,
+        slices: newSlices,
+      };
+
+      set({
+        graph: newGraph,
+        resolvedStates: recomputeResolvedStates(newGraph),
+      });
+    } else {
+      // For non-type changes (like adding children), update the global edge
+      const updatedEdge = { ...edge, ...changes };
+
+      const newGraph = {
+        ...graph,
+        edges: { ...graph.edges, [edgeId]: updatedEdge },
+      };
+
+      set({
+        graph: newGraph,
+        resolvedStates: recomputeResolvedStates(newGraph),
+      });
+    }
   },
 
   addChildToRelationship: (edgeId, child) => {
-    const { currentSliceIndex, resolvedStates, addDelta } = get();
+    const { currentSliceIndex, resolvedStates, graph } = get();
     const currentState = resolvedStates[currentSliceIndex];
     if (!currentState) return null;
 
@@ -431,27 +602,65 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     // Create the child node
     const childId = generateId();
     const childColor = getRandomNodeColor();
-    addDelta(currentSliceIndex, {
-      op: 'addNode',
-      node: { ...child, id: childId, position: childPosition, color: childColor },
-    });
+    const childNode: Person = {
+      ...child,
+      id: childId,
+      position: childPosition,
+      color: childColor,
+      introducedSliceIndex: currentSliceIndex,
+    };
 
-    // Create parent-child relationships (hidden - the T-shape will render them)
-    addDelta(currentSliceIndex, {
-      op: 'addEdge',
-      edge: { id: generateId(), type: 'parent-child', sourceId: relationship.sourceId, targetId: childId, hidden: true },
-    });
-    addDelta(currentSliceIndex, {
-      op: 'addEdge',
-      edge: { id: generateId(), type: 'parent-child', sourceId: relationship.targetId, targetId: childId, hidden: true },
-    });
+    // Create parent-child relationships
+    const parentChildEdge1Id = generateId();
+    const parentChildEdge2Id = generateId();
+    const parentChildEdge1: Relationship = {
+      id: parentChildEdge1Id,
+      type: 'parent-child',
+      sourceId: relationship.sourceId,
+      targetId: childId,
+      hidden: true,
+      introducedSliceIndex: currentSliceIndex,
+    };
+    const parentChildEdge2: Relationship = {
+      id: parentChildEdge2Id,
+      type: 'parent-child',
+      sourceId: relationship.targetId,
+      targetId: childId,
+      hidden: true,
+      introducedSliceIndex: currentSliceIndex,
+    };
 
     // Update the marriage/unmarried-relations edge to include this child
-    const updatedChildIds = [...(relationship.childIds || []), childId];
-    addDelta(currentSliceIndex, {
-      op: 'updateEdge',
-      edgeId,
-      changes: { childIds: updatedChildIds },
+    const updatedChildIds = [...(graph.edges[edgeId]?.childIds || []), childId];
+    const updatedEdge = { ...graph.edges[edgeId], childIds: updatedChildIds };
+
+    // Add events
+    const newSlices = [...graph.slices];
+    newSlices[currentSliceIndex] = {
+      ...newSlices[currentSliceIndex],
+      events: [
+        ...newSlices[currentSliceIndex].events,
+        { type: 'addNode', nodeId: childId },
+        { type: 'addEdge', edgeId: parentChildEdge1Id },
+        { type: 'addEdge', edgeId: parentChildEdge2Id },
+      ],
+    };
+
+    const newGraph = {
+      ...graph,
+      nodes: { ...graph.nodes, [childId]: childNode },
+      edges: {
+        ...graph.edges,
+        [edgeId]: updatedEdge,
+        [parentChildEdge1Id]: parentChildEdge1,
+        [parentChildEdge2Id]: parentChildEdge2,
+      },
+      slices: newSlices,
+    };
+
+    set({
+      graph: newGraph,
+      resolvedStates: recomputeResolvedStates(newGraph),
     });
 
     return childId;
@@ -540,7 +749,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       currentSliceIndex: 0,
       selectedNodeIds: [],
       selectedEdgeId: null,
-      resolvedStates: recomputeResolvedStates(graph.slices),
+      resolvedStates: recomputeResolvedStates(graph),
     });
   },
 
@@ -551,7 +760,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       currentSliceIndex: 0,
       selectedNodeIds: [],
       selectedEdgeId: null,
-      resolvedStates: recomputeResolvedStates(newGraph.slices),
+      resolvedStates: recomputeResolvedStates(newGraph),
     });
   },
 

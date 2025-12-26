@@ -47,7 +47,7 @@ export function CrossSliceEdges({ resolvedStates, sliceSpacing }: CrossSliceEdge
         // Get color based on first occurrence
         const firstState = resolvedStates.find((s) => s.nodes.has(nodeId));
         const gender = firstState?.nodes.get(nodeId)?.gender;
-        const color = gender === 'male' ? '#3b82f6' : '#ec4899';
+        const color = gender === 'male' ? '#6b8cae' : '#9a7b6f';
 
         result.push({ nodeId, points, color });
       }

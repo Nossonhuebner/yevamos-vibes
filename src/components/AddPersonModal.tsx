@@ -67,8 +67,8 @@ export function AddPersonModal({ isOpen, position, onClose, onSubmit, titleKey =
           position: 'fixed',
           left: `${position.x}px`,
           top: `${position.y}px`,
-          backgroundColor: '#1e293b',
-          border: '1px solid #334155',
+          backgroundColor: '#151922',
+          border: '1px solid #2a2f3a',
           borderRadius: '8px',
           padding: '16px',
           zIndex: 201,
@@ -77,7 +77,7 @@ export function AddPersonModal({ isOpen, position, onClose, onSubmit, titleKey =
           direction: isRTL ? 'rtl' : 'ltr',
         }}
       >
-        <h3 style={{ margin: '0 0 16px 0', color: '#f1f5f9', fontSize: '14px' }}>
+        <h3 style={{ margin: '0 0 16px 0', color: '#e8e6e3', fontSize: '14px' }}>
           {t(titleKey)}
         </h3>
 
@@ -133,8 +133,8 @@ export function AddPersonModal({ isOpen, position, onClose, onSubmit, titleKey =
                 style={{
                   flex: 1,
                   padding: '8px 12px',
-                  backgroundColor: gender === 'male' ? '#3b82f6' : '#0f172a',
-                  border: `1px solid ${gender === 'male' ? '#3b82f6' : '#334155'}`,
+                  backgroundColor: gender === 'male' ? '#7c9885' : '#0c0f14',
+                  border: `1px solid ${gender === 'male' ? '#7c9885' : '#2a2f3a'}`,
                   borderRadius: '4px',
                   color: '#f1f5f9',
                   fontSize: '14px',
@@ -149,8 +149,8 @@ export function AddPersonModal({ isOpen, position, onClose, onSubmit, titleKey =
                 style={{
                   flex: 1,
                   padding: '8px 12px',
-                  backgroundColor: gender === 'female' ? '#ec4899' : '#0f172a',
-                  border: `1px solid ${gender === 'female' ? '#ec4899' : '#334155'}`,
+                  backgroundColor: gender === 'female' ? '#7c9885' : '#0c0f14',
+                  border: `1px solid ${gender === 'female' ? '#7c9885' : '#2a2f3a'}`,
                   borderRadius: '4px',
                   color: '#f1f5f9',
                   fontSize: '14px',
@@ -169,9 +169,9 @@ export function AddPersonModal({ isOpen, position, onClose, onSubmit, titleKey =
               style={{
                 padding: '8px 16px',
                 backgroundColor: 'transparent',
-                border: '1px solid #334155',
+                border: '1px solid #2a2f3a',
                 borderRadius: '4px',
-                color: '#94a3b8',
+                color: '#8a8a8a',
                 fontSize: '14px',
                 cursor: 'pointer',
               }}
@@ -183,10 +183,10 @@ export function AddPersonModal({ isOpen, position, onClose, onSubmit, titleKey =
               disabled={!name.trim()}
               style={{
                 padding: '8px 16px',
-                backgroundColor: name.trim() ? '#22c55e' : '#334155',
+                backgroundColor: name.trim() ? '#5fa052' : '#1f242e',
                 border: 'none',
                 borderRadius: '4px',
-                color: name.trim() ? '#fff' : '#64748b',
+                color: name.trim() ? '#e8e6e3' : '#5a5a5a',
                 fontSize: '14px',
                 cursor: name.trim() ? 'pointer' : 'not-allowed',
               }}

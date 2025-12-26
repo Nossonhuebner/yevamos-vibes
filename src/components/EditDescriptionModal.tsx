@@ -66,8 +66,8 @@ export function EditDescriptionModal({
           position: 'fixed',
           left: `${position.x}px`,
           top: `${position.y}px`,
-          backgroundColor: '#1e293b',
-          border: '1px solid #334155',
+          backgroundColor: '#151922',
+          border: '1px solid #2a2f3a',
           borderRadius: '8px',
           padding: '16px',
           zIndex: 201,
@@ -76,7 +76,7 @@ export function EditDescriptionModal({
           direction: isRTL ? 'rtl' : 'ltr',
         }}
       >
-        <h3 style={{ margin: '0 0 16px 0', color: '#f1f5f9', fontSize: '14px' }}>
+        <h3 style={{ margin: '0 0 16px 0', color: '#e8e6e3', fontSize: '14px' }}>
           {t('editDescription')}
         </h3>
 
@@ -91,10 +91,10 @@ export function EditDescriptionModal({
               style={{
                 width: '100%',
                 padding: '8px 12px',
-                backgroundColor: '#0f172a',
-                border: '1px solid #334155',
+                backgroundColor: '#0c0f14',
+                border: '1px solid #2a2f3a',
                 borderRadius: '4px',
-                color: '#f1f5f9',
+                color: '#e8e6e3',
                 fontSize: '14px',
                 outline: 'none',
                 boxSizing: 'border-box',
@@ -110,9 +110,9 @@ export function EditDescriptionModal({
               style={{
                 padding: '8px 16px',
                 backgroundColor: 'transparent',
-                border: '1px solid #334155',
+                border: '1px solid #2a2f3a',
                 borderRadius: '4px',
-                color: '#94a3b8',
+                color: '#8a8a8a',
                 fontSize: '14px',
                 cursor: 'pointer',
               }}
@@ -123,10 +123,10 @@ export function EditDescriptionModal({
               type="submit"
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#3b82f6',
+                backgroundColor: '#5fa052',
                 border: 'none',
                 borderRadius: '4px',
-                color: '#fff',
+                color: '#e8e6e3',
                 fontSize: '14px',
                 cursor: 'pointer',
               }}

@@ -1,7 +1,6 @@
 import { useGraphStore } from '@/store/graphStore';
-import { exportToJson, importFromJson } from '@/utils/persistence';
-import { useRef, useState } from 'react';
-import { ViewModeToggle } from './ViewModeToggle';
+import { exportToJson, importFromJson, getShareableUrl } from '@/utils/persistence';
+import { useRef, useState, useCallback } from 'react';
 import { LanguageToggle } from './LanguageToggle';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -13,7 +12,27 @@ export function Toolbar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState(graph.metadata.title);
+  const [linkCopiedToast, setLinkCopiedToast] = useState(false);
+  const toastTimeoutRef = useRef<number | null>(null);
   const { t, isRTL } = useTranslation();
+
+  const handleCopyLink = useCallback(async () => {
+    try {
+      const url = getShareableUrl(graph);
+      await navigator.clipboard.writeText(url);
+
+      // Show toast
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+      setLinkCopiedToast(true);
+      toastTimeoutRef.current = window.setTimeout(() => {
+        setLinkCopiedToast(false);
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+    }
+  }, [graph]);
 
   const handleExport = () => {
     exportToJson(graph);
@@ -65,65 +84,94 @@ export function Toolbar() {
   };
 
   return (
-    <div className="toolbar-overlay" style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
-      {/* Graph title input */}
-      {isEditingTitle ? (
-        <input
-          type="text"
-          value={titleValue}
-          onChange={(e) => setTitleValue(e.target.value)}
-          onBlur={handleTitleSubmit}
-          onKeyDown={handleTitleKeyDown}
-          autoFocus
-          style={{
-            backgroundColor: '#0f172a',
-            border: '1px solid #3b82f6',
-            borderRadius: '4px',
-            padding: '6px 12px',
-            color: '#f1f5f9',
-            fontSize: '14px',
-            fontWeight: 600,
-            outline: 'none',
-            minWidth: '150px',
-            direction: isRTL ? 'rtl' : 'ltr',
-          }}
-        />
-      ) : (
+    <>
+      {/* Left toolbar - Graph title and controls */}
+      <div className="toolbar-overlay" style={{ left: '20px', right: 'auto' }}>
+        {/* Graph title input */}
+        {isEditingTitle ? (
+          <input
+            type="text"
+            value={titleValue}
+            onChange={(e) => setTitleValue(e.target.value)}
+            onBlur={handleTitleSubmit}
+            onKeyDown={handleTitleKeyDown}
+            autoFocus
+            style={{
+              backgroundColor: '#0f172a',
+              border: '1px solid #7c9885',
+              borderRadius: '4px',
+              padding: '6px 12px',
+              color: '#f1f5f9',
+              fontSize: '14px',
+              fontWeight: 600,
+              outline: 'none',
+              minWidth: '150px',
+              direction: isRTL ? 'rtl' : 'ltr',
+            }}
+          />
+        ) : (
+          <div
+            onClick={() => setIsEditingTitle(true)}
+            style={{
+              padding: '6px 12px',
+              color: (graph.metadata.title === t('untitledGraph') || graph.metadata.title === 'Untitled Graph') ? '#64748b' : '#f1f5f9',
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: 'text',
+              borderRadius: '4px',
+              backgroundColor: 'rgba(15, 23, 42, 0.5)',
+            }}
+          >
+            {graph.metadata.title === 'Untitled Graph' ? t('untitledGraph') : graph.metadata.title}
+          </div>
+        )}
+
+        <div style={{ width: '1px', height: '20px', backgroundColor: '#2a2f3a', margin: '0 8px' }} />
+
+        <button className="btn btn-secondary btn-sm" onClick={handleExport}>
+          {t('exportJson')}
+        </button>
+        <button className="btn btn-secondary btn-sm" onClick={handleImportClick}>
+          {t('importJson')}
+        </button>
+        <button className="btn btn-danger btn-sm" onClick={handleReset}>
+          {t('reset')}
+        </button>
+
+        <div style={{ width: '1px', height: '20px', backgroundColor: '#2a2f3a', margin: '0 8px' }} />
+
+        <button className="btn btn-secondary btn-sm" onClick={handleCopyLink}>
+          {t('copyLink')}
+        </button>
+      </div>
+
+      {/* Right toolbar - Language toggle (always on right) */}
+      <div className="toolbar-overlay" style={{ left: 'auto', right: '20px' }}>
+        <LanguageToggle />
+      </div>
+
+      {/* Link copied toast */}
+      {linkCopiedToast && (
         <div
-          onClick={() => setIsEditingTitle(true)}
           style={{
-            padding: '6px 12px',
-            color: graph.metadata.title === t('untitledGraph') ? '#64748b' : '#f1f5f9',
-            fontSize: '14px',
-            fontWeight: 600,
-            cursor: 'text',
-            borderRadius: '4px',
-            backgroundColor: 'rgba(15, 23, 42, 0.5)',
+            position: 'fixed',
+            top: '60px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: '#5fa052',
+            color: '#e8e6e3',
+            padding: '8px 16px',
+            borderRadius: '6px',
+            fontSize: '13px',
+            fontWeight: 500,
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+            zIndex: 300,
+            animation: 'fadeIn 0.2s ease-out',
           }}
         >
-          {graph.metadata.title}
+          {t('linkCopied')}
         </div>
       )}
-
-      <div style={{ width: '1px', height: '20px', backgroundColor: '#334155', margin: '0 8px' }} />
-
-      <ViewModeToggle />
-
-      <div style={{ width: '1px', height: '20px', backgroundColor: '#334155', margin: '0 8px' }} />
-
-      <button className="btn btn-secondary btn-sm" onClick={handleExport}>
-        {t('exportJson')}
-      </button>
-      <button className="btn btn-secondary btn-sm" onClick={handleImportClick}>
-        {t('importJson')}
-      </button>
-      <button className="btn btn-danger btn-sm" onClick={handleReset}>
-        {t('reset')}
-      </button>
-
-      <div style={{ width: '1px', height: '20px', backgroundColor: '#334155', margin: '0 8px' }} />
-
-      <LanguageToggle />
 
       <input
         ref={fileInputRef}
@@ -132,6 +180,6 @@ export function Toolbar() {
         onChange={handleImport}
         style={{ display: 'none' }}
       />
-    </div>
+    </>
   );
 }

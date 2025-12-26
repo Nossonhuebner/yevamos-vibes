@@ -46,8 +46,8 @@ export function SelectionBox() {
           top: `${top}px`,
           width: `${width}px`,
           height: `${height}px`,
-          border: '2px dashed #60a5fa',
-          backgroundColor: 'rgba(96, 165, 250, 0.15)',
+          border: '2px dashed #7c9885',
+          backgroundColor: 'rgba(124, 152, 133, 0.15)',
           pointerEvents: 'none',
           zIndex: 100,
         }}
@@ -88,8 +88,8 @@ export function SelectionBox() {
             top: `${selectionBounds.top}px`,
             width: `${selectionBounds.width}px`,
             height: `${selectionBounds.height}px`,
-            border: '2px solid #60a5fa',
-            backgroundColor: 'rgba(96, 165, 250, 0.08)',
+            border: '2px solid #7c9885',
+            backgroundColor: 'rgba(124, 152, 133, 0.08)',
             borderRadius: '4px',
             pointerEvents: 'none',
             zIndex: 100,
@@ -104,7 +104,7 @@ export function SelectionBox() {
             top: `${selectionBounds.top + selectionBounds.height + 8}px`,
             width: '40px',
             height: '24px',
-            backgroundColor: '#3b82f6',
+            backgroundColor: '#7c9885',
             borderRadius: '4px',
             cursor: 'grab',
             display: 'flex',
@@ -115,7 +115,7 @@ export function SelectionBox() {
           }}
           onMouseDown={handleDragStart}
         >
-          <span style={{ color: '#fff', fontSize: '12px', userSelect: 'none' }}>⋮⋮</span>
+          <span style={{ color: '#0c0f14', fontSize: '12px', userSelect: 'none' }}>⋮⋮</span>
         </div>
 
         {/* Selection count badge */}
@@ -125,8 +125,8 @@ export function SelectionBox() {
             left: `${selectionBounds.left + selectionBounds.width / 2 - 12}px`,
             top: `${selectionBounds.top - 28}px`,
             padding: '2px 8px',
-            backgroundColor: '#3b82f6',
-            color: '#fff',
+            backgroundColor: '#7c9885',
+            color: '#0c0f14',
             borderRadius: '10px',
             fontSize: '11px',
             fontWeight: 'bold',
