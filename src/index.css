@@ -8,15 +8,15 @@
   --bg-primary: #0c0f14;
   --bg-secondary: #151922;
   --bg-tertiary: #1f242e;
-  --text-primary: #e8e6e3;
-  --text-secondary: #8a8a8a;
-  --accent: #7c9885;
-  --accent-hover: #8faa97;
-  --accent-muted: rgba(124, 152, 133, 0.15);
-  --border: #2a2f3a;
-  --success: #5fa052;
-  --danger: #a65d57;
-  --danger-hover: #8b4d48;
+  --text-primary: #f0f0f0;
+  --text-secondary: #9ca3af;
+  --accent: #22d3ee;
+  --accent-hover: #67e8f9;
+  --accent-muted: rgba(34, 211, 238, 0.15);
+  --border: #334155;
+  --success: #34d399;
+  --danger: #f87171;
+  --danger-hover: #ef4444;
 }
 
 html, body {

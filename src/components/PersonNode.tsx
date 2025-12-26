@@ -61,7 +61,7 @@ export function PersonNode({ person, sliceIndex, isCurrentSlice }: PersonNodePro
 
   // Node colors: use person's assigned color, adjusted for state
   const baseColor = isDead ? '#6b7280' : person.color;
-  const color = isSelected ? '#7c9885' : hovered ? '#8a8a8a' : baseColor;
+  const color = isSelected ? '#22d3ee' : hovered ? '#a1a1aa' : baseColor;
   const emoji = getPersonEmojiChar(person.id, person.gender);
 
   // Check if this is a group drag (multiple nodes selected including this one)
@@ -246,9 +246,9 @@ export function PersonNode({ person, sliceIndex, isCurrentSlice }: PersonNodePro
         <meshStandardMaterial
           color={color}
           emissive={
-            isHighlightedAsNew ? '#5fa052' :  // Green glow for new nodes
-            isHighlightedAsDead ? '#a65d57' :  // Red glow for death highlight
-            isSelected ? '#7c9885' : '#000000'
+            isHighlightedAsNew ? '#34d399' :  // Green glow for new nodes
+            isHighlightedAsDead ? '#f87171' :  // Red glow for death highlight
+            isSelected ? '#22d3ee' : '#000000'
           }
           emissiveIntensity={
             isHighlightedAsNew || isHighlightedAsDead ? glowIntensity :
@@ -271,7 +271,7 @@ export function PersonNode({ person, sliceIndex, isCurrentSlice }: PersonNodePro
       {isSelected && (
         <mesh position={[0, 0, 0.01]}>
           <ringGeometry args={[0.4, 0.5, 32]} />
-          <meshBasicMaterial color="#7c9885" transparent opacity={0.5} />
+          <meshBasicMaterial color="#22d3ee" transparent opacity={0.5} />
         </mesh>
       )}
 
@@ -296,7 +296,7 @@ export function PersonNode({ person, sliceIndex, isCurrentSlice }: PersonNodePro
           >
             <circleGeometry args={[0.15, 16]} />
             <meshStandardMaterial
-              color={handleHovered || isDragging ? '#7c9885' : '#2a2f3a'}
+              color={handleHovered || isDragging ? '#22d3ee' : '#334155'}
               transparent
               opacity={0.9}
             />

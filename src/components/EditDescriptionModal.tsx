@@ -112,7 +112,7 @@ export function EditDescriptionModal({
                 backgroundColor: 'transparent',
                 border: '1px solid #2a2f3a',
                 borderRadius: '4px',
-                color: '#8a8a8a',
+                color: '#9ca3af',
                 fontSize: '14px',
                 cursor: 'pointer',
               }}
@@ -123,7 +123,7 @@ export function EditDescriptionModal({
               type="submit"
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#5fa052',
+                backgroundColor: '#34d399',
                 border: 'none',
                 borderRadius: '4px',
                 color: '#e8e6e3',

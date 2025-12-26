@@ -10,20 +10,20 @@ export interface Person {
   deathSliceIndex?: number; // Slice index where this person died (undefined = alive)
 }
 
-// Color palette for node colors - bright, vibrant colors
+// Color palette for node colors - vivid, saturated colors
 export const NODE_COLOR_PALETTE = [
-  '#e74c3c', // bright red
-  '#27ae60', // bright green
-  '#3498db', // bright blue
-  '#9b59b6', // bright purple
-  '#e67e22', // bright orange
-  '#1abc9c', // bright teal
-  '#f39c12', // bright gold
-  '#2980b9', // ocean blue
-  '#8e44ad', // deep purple
-  '#16a085', // sea green
-  '#c0392b', // dark red
-  '#2ecc71', // emerald
+  '#ff6b6b', // coral red
+  '#4ecdc4', // turquoise
+  '#ffe66d', // sunny yellow
+  '#a855f7', // vivid purple
+  '#fb923c', // bright orange
+  '#2dd4bf', // teal
+  '#f472b6', // pink
+  '#60a5fa', // sky blue
+  '#a3e635', // lime green
+  '#fbbf24', // amber
+  '#c084fc', // lavender
+  '#34d399', // emerald
 ];
 
 export function getRandomNodeColor(): string {
@@ -91,13 +91,13 @@ export interface RelationshipStyle {
 }
 
 export const RELATIONSHIP_STYLES: Record<RelationshipType, RelationshipStyle> = {
-  'marriage': { color: '#5fa052', lineStyle: 'solid', lineWidth: 2 },
-  'divorce': { color: '#a65d57', lineStyle: 'dashed', lineWidth: 2 },
-  'yibum': { color: '#d4a054', lineStyle: 'solid', lineWidth: 3 },
-  'chalitzah': { color: '#8b7ba8', lineStyle: 'dashed', lineWidth: 2 },
-  'parent-child': { color: '#7c9885', lineStyle: 'solid', lineWidth: 2 },
-  'sibling': { color: '#a08b7f', lineStyle: 'solid', lineWidth: 1 },
-  'unmarried-relations': { color: '#c4a86c', lineStyle: 'dotted', lineWidth: 2 },
+  'marriage': { color: '#34d399', lineStyle: 'solid', lineWidth: 2 },
+  'divorce': { color: '#f87171', lineStyle: 'dashed', lineWidth: 2 },
+  'yibum': { color: '#fbbf24', lineStyle: 'solid', lineWidth: 3 },
+  'chalitzah': { color: '#c084fc', lineStyle: 'dashed', lineWidth: 2 },
+  'parent-child': { color: '#22d3ee', lineStyle: 'solid', lineWidth: 2 },
+  'sibling': { color: '#94a3b8', lineStyle: 'solid', lineWidth: 1 },
+  'unmarried-relations': { color: '#fb923c', lineStyle: 'dotted', lineWidth: 2 },
 };
 
 export const RELATIONSHIP_LABELS: Record<RelationshipType, string> = {

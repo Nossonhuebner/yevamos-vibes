@@ -45,7 +45,7 @@ export function TimeSlicePlane({
 
   // Border color also adjusts in Focus mode
   const borderColor = useMemo(() => {
-    if (isCurrentSlice) return '#7c9885';
+    if (isCurrentSlice) return '#22d3ee';
     if (viewMode === 'focus') {
       const distance = Math.abs(sliceIndex - currentSliceIndex);
       // Fade border color based on distance
@@ -112,7 +112,7 @@ export function TimeSlicePlane({
       >
         <planeGeometry args={[32, 32]} />
         <meshStandardMaterial
-          color={isCurrentSlice ? '#7c9885' : '#151922'}
+          color={isCurrentSlice ? '#22d3ee' : '#151922'}
           transparent
           opacity={planeOpacity}
           side={THREE.DoubleSide}
@@ -130,7 +130,7 @@ export function TimeSlicePlane({
       <Text
         position={[15.5, 15.5, 0.1]}
         fontSize={0.5}
-        color={isCurrentSlice ? '#7c9885' : '#5a5a5a'}
+        color={isCurrentSlice ? '#22d3ee' : '#6b7280'}
         anchorX="right"
       >
         t={sliceIndex}

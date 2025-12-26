@@ -406,7 +406,7 @@ function App() {
             bottom: '80px',
             left: '50%',
             transform: 'translateX(-50%)',
-            backgroundColor: toast.type === 'error' ? '#a65d57' : '#7c9885',
+            backgroundColor: toast.type === 'error' ? '#f87171' : '#34d399',
             color: '#fff',
             padding: '12px 24px',
             borderRadius: '8px',

@@ -133,8 +133,8 @@ export function AddPersonModal({ isOpen, position, onClose, onSubmit, titleKey =
                 style={{
                   flex: 1,
                   padding: '8px 12px',
-                  backgroundColor: gender === 'male' ? '#7c9885' : '#0c0f14',
-                  border: `1px solid ${gender === 'male' ? '#7c9885' : '#2a2f3a'}`,
+                  backgroundColor: gender === 'male' ? '#22d3ee' : '#0c0f14',
+                  border: `1px solid ${gender === 'male' ? '#22d3ee' : '#334155'}`,
                   borderRadius: '4px',
                   color: '#f1f5f9',
                   fontSize: '14px',
@@ -149,8 +149,8 @@ export function AddPersonModal({ isOpen, position, onClose, onSubmit, titleKey =
                 style={{
                   flex: 1,
                   padding: '8px 12px',
-                  backgroundColor: gender === 'female' ? '#7c9885' : '#0c0f14',
-                  border: `1px solid ${gender === 'female' ? '#7c9885' : '#2a2f3a'}`,
+                  backgroundColor: gender === 'female' ? '#22d3ee' : '#0c0f14',
+                  border: `1px solid ${gender === 'female' ? '#22d3ee' : '#334155'}`,
                   borderRadius: '4px',
                   color: '#f1f5f9',
                   fontSize: '14px',
@@ -171,7 +171,7 @@ export function AddPersonModal({ isOpen, position, onClose, onSubmit, titleKey =
                 backgroundColor: 'transparent',
                 border: '1px solid #2a2f3a',
                 borderRadius: '4px',
-                color: '#8a8a8a',
+                color: '#9ca3af',
                 fontSize: '14px',
                 cursor: 'pointer',
               }}
@@ -183,7 +183,7 @@ export function AddPersonModal({ isOpen, position, onClose, onSubmit, titleKey =
               disabled={!name.trim()}
               style={{
                 padding: '8px 16px',
-                backgroundColor: name.trim() ? '#5fa052' : '#1f242e',
+                backgroundColor: name.trim() ? '#34d399' : '#1f242e',
                 border: 'none',
                 borderRadius: '4px',
                 color: name.trim() ? '#e8e6e3' : '#5a5a5a',

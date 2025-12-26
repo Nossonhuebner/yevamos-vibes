@@ -98,7 +98,7 @@ export function Toolbar() {
             autoFocus
             style={{
               backgroundColor: '#0f172a',
-              border: '1px solid #7c9885',
+              border: '1px solid #22d3ee',
               borderRadius: '4px',
               padding: '6px 12px',
               color: '#f1f5f9',
@@ -158,7 +158,7 @@ export function Toolbar() {
             top: '60px',
             left: '50%',
             transform: 'translateX(-50%)',
-            backgroundColor: '#5fa052',
+            backgroundColor: '#34d399',
             color: '#e8e6e3',
             padding: '8px 16px',
             borderRadius: '6px',
