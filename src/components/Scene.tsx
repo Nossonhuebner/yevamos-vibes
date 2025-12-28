@@ -5,6 +5,7 @@ import { TimeSlicePlane } from './TimeSlicePlane';
 import { CrossSliceEdges } from './CrossSliceEdges';
 import { SelectionBoxHandler } from './SelectionBoxHandler';
 import { CameraController } from './CameraController';
+import { HalachicOverlay } from './HalachicOverlay';
 
 export function Scene() {
   const slices = useGraphStore((state) => state.graph.slices);
@@ -70,6 +71,9 @@ export function Scene() {
         resolvedStates={resolvedStates}
         sliceSpacing={SLICE_SPACING}
       />
+
+      {/* Halachic overlay (status lines when halacha mode is active) */}
+      <HalachicOverlay sliceSpacing={SLICE_SPACING} />
 
       {/* Reference grid on ground plane */}
       <Grid

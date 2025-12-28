@@ -2,6 +2,7 @@ import { useGraphStore } from '@/store/graphStore';
 import { exportToJson, importFromJson, getShareableUrl } from '@/utils/persistence';
 import { useRef, useState, useCallback } from 'react';
 import { LanguageToggle } from './LanguageToggle';
+import { HalachaToggle } from './HalachaToggle';
 import { useTranslation } from '@/hooks/useTranslation';
 
 export function Toolbar() {
@@ -145,8 +146,10 @@ export function Toolbar() {
         </button>
       </div>
 
-      {/* Right toolbar - Language toggle (always on right) */}
+      {/* Right toolbar - Halacha toggle and Language toggle (always on right) */}
       <div className="toolbar-overlay" style={{ left: 'auto', right: '20px' }}>
+        <HalachaToggle />
+        <div style={{ width: '1px', height: '20px', backgroundColor: '#2a2f3a', margin: '0 8px' }} />
         <LanguageToggle />
       </div>
 

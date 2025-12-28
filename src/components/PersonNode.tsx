@@ -4,6 +4,7 @@ import { useFrame, ThreeEvent, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Person } from '@/types';
 import { useGraphStore } from '@/store/graphStore';
+import { useHalachaStore } from '@/store/halachaStore';
 import { isPersonDead } from '@/utils/deltaResolver';
 import { getPersonEmojiChar } from '@/utils/emojiTextures';
 import { isNodeHighlightedAsNew, isNodeHighlightedAsDead } from '@/utils/sliceDelta';
@@ -27,6 +28,13 @@ export function PersonNode({ person, sliceIndex, isCurrentSlice }: PersonNodePro
   const resolvedStates = useGraphStore((state) => state.resolvedStates);
   const highlightedChanges = useGraphStore((state) => state.highlightedChanges);
   const viewMode = useGraphStore((state) => state.viewMode);
+
+  // Halacha mode state
+  const halachaEnabled = useHalachaStore((state) => state.enabled);
+  const lockedPersonId = useHalachaStore((state) => state.lockedPersonId);
+  const setLockedPerson = useHalachaStore((state) => state.setLockedPerson);
+  const setHoveredPerson = useHalachaStore((state) => state.setHoveredPerson);
+  const setShowStatusPanel = useHalachaStore((state) => state.setShowStatusPanel);
 
   const { camera, gl } = useThree();
   const [hovered, setHovered] = useState(false);
@@ -164,6 +172,24 @@ export function PersonNode({ person, sliceIndex, isCurrentSlice }: PersonNodePro
 
   const handleNodeClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
+
+    // Handle halacha mode
+    if (halachaEnabled && isCurrentSlice) {
+      if (lockedPersonId === person.id) {
+        // Clicking the locked person clears the lock
+        setLockedPerson(null);
+        setHoveredPerson(null);
+      } else if (lockedPersonId) {
+        // Clicking another person while locked - show status panel for comparison
+        setShowStatusPanel(true);
+      } else {
+        // Lock this person for halacha viewing
+        setLockedPerson(person.id);
+        setShowStatusPanel(true);
+      }
+      return;
+    }
+
     if (canInteract) {
       // If another node is selected, just clear selection (don't select this one)
       if (selectedNodeIds.length > 0 && !selectedNodeIds.includes(person.id)) {
@@ -272,15 +298,23 @@ export function PersonNode({ person, sliceIndex, isCurrentSlice }: PersonNodePro
         onClick={handleNodeClick}
         onContextMenu={handleContextMenu}
         onPointerOver={() => {
-          if (canInteract) {
+          if (canInteract || (halachaEnabled && isCurrentSlice)) {
             setHovered(true);
             document.body.style.cursor = 'pointer';
+            // Track hovered person for halacha mode
+            if (halachaEnabled && lockedPersonId && lockedPersonId !== person.id) {
+              setHoveredPerson(person.id);
+            }
           }
         }}
         onPointerOut={() => {
           setHovered(false);
           if (!handleHovered) {
             document.body.style.cursor = 'auto';
+          }
+          // Clear hovered person for halacha mode
+          if (halachaEnabled) {
+            setHoveredPerson(null);
           }
         }}
       >

@@ -8,6 +8,8 @@ import { SelectionBox } from './components/SelectionBox';
 import { AddPersonModal } from './components/AddPersonModal';
 import { AddRelationModal } from './components/AddRelationModal';
 import { EditDescriptionModal } from './components/EditDescriptionModal';
+import { StatusPanel } from './components/StatusPanel';
+import { HalachaInstructions } from './components/HalachaToggle';
 import { useGraphStore, useCurrentResolvedState } from './store/graphStore';
 import { loadFromLocalStorage, saveToLocalStorage, getGraphFromUrl, clearUrlData } from './utils/persistence';
 import { preloadEmojiTextures } from './utils/emojiTextures';
@@ -439,6 +441,10 @@ function App() {
           }}
         />
       )}
+
+      {/* Halacha Mode Components */}
+      <StatusPanel />
+      <HalachaInstructions />
 
       {/* GitHub Link */}
       <a
