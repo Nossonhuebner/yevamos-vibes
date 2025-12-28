@@ -71,6 +71,9 @@ interface GraphStore {
   // Context menu
   contextMenu: { target: ContextMenuType; screenX: number; screenY: number } | null;
 
+  // Edit description modal
+  editDescriptionModal: { sliceIndex: number } | null;
+
   // Language
   language: Language;
 
@@ -119,6 +122,10 @@ interface GraphStore {
   openContextMenu: (target: ContextMenuType, screenX: number, screenY: number) => void;
   closeContextMenu: () => void;
 
+  // Edit description modal
+  openEditDescription: (sliceIndex: number) => void;
+  closeEditDescription: () => void;
+
   // Persistence
   loadGraph: (graph: TemporalGraph) => void;
   resetGraph: () => void;
@@ -147,7 +154,7 @@ const createInitialGraph = (): TemporalGraph => ({
   slices: [
     {
       id: generateId(),
-      label: 'Initial State',
+      label: '',
       events: [],
     },
   ],
@@ -172,6 +179,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   isDraggingSelection: false,
   selectionDragState: null,
   contextMenu: null,
+  editDescriptionModal: null,
   resolvedStates: [{ nodes: new Map(), edges: new Map() }],
 
   // Walkthrough/Slideshow state
@@ -741,6 +749,14 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
 
   closeContextMenu: () => {
     set({ contextMenu: null });
+  },
+
+  openEditDescription: (sliceIndex) => {
+    set({ editDescriptionModal: { sliceIndex } });
+  },
+
+  closeEditDescription: () => {
+    set({ editDescriptionModal: null });
   },
 
   loadGraph: (graph) => {

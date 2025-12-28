@@ -2,27 +2,25 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface EditDescriptionModalProps {
-  position: { x: number; y: number };
   currentLabel: string;
   onClose: () => void;
   onSubmit: (label: string) => void;
 }
 
 export function EditDescriptionModal({
-  position,
   currentLabel,
   onClose,
   onSubmit,
 }: EditDescriptionModalProps) {
   const [value, setValue] = useState(currentLabel);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { t, isRTL } = useTranslation();
 
-  // Focus input on mount
+  // Focus textarea on mount
   useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.select();
     }
   }, []);
 
@@ -60,18 +58,20 @@ export function EditDescriptionModal({
         onClick={onClose}
       />
 
-      {/* Modal */}
+      {/* Modal - positioned above the click point */}
       <div
         style={{
           position: 'fixed',
-          left: `${position.x}px`,
-          top: `${position.y}px`,
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
           backgroundColor: '#151922',
           border: '1px solid #2a2f3a',
           borderRadius: '8px',
           padding: '16px',
           zIndex: 201,
-          minWidth: '300px',
+          minWidth: '450px',
+          maxWidth: '90vw',
           boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)',
           direction: isRTL ? 'rtl' : 'ltr',
         }}
@@ -82,23 +82,32 @@ export function EditDescriptionModal({
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '16px' }}>
-            <input
-              ref={inputRef}
-              type="text"
+            <textarea
+              ref={textareaRef}
               value={value}
               onChange={(e) => setValue(e.target.value)}
               placeholder={t('enterDescription')}
+              rows={4}
               style={{
                 width: '100%',
-                padding: '8px 12px',
+                padding: '12px',
                 backgroundColor: '#0c0f14',
-                border: '1px solid #2a2f3a',
-                borderRadius: '4px',
+                border: '1px solid #334155',
+                borderRadius: '6px',
                 color: '#e8e6e3',
-                fontSize: '14px',
+                fontSize: '15px',
+                lineHeight: '1.5',
                 outline: 'none',
                 boxSizing: 'border-box',
                 direction: isRTL ? 'rtl' : 'ltr',
+                resize: 'vertical',
+                fontFamily: 'inherit',
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }
               }}
             />
           </div>

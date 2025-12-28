@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { Text, Line } from '@react-three/drei';
+import { useMemo, useState } from 'react';
+import { Text, Line, RoundedBox } from '@react-three/drei';
 import { ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { ResolvedGraphState, TimeSlice, Person } from '@/types';
@@ -26,22 +26,21 @@ export function TimeSlicePlane({
 }: TimeSlicePlaneProps) {
   const setCurrentSlice = useGraphStore((state) => state.setCurrentSlice);
   const openContextMenu = useGraphStore((state) => state.openContextMenu);
+  const openEditDescription = useGraphStore((state) => state.openEditDescription);
   const currentSliceIndex = useGraphStore((state) => state.currentSliceIndex);
   const clearNodeSelection = useGraphStore((state) => state.clearNodeSelection);
   const viewMode = useGraphStore((state) => state.viewMode);
   const isDraggingNode = useGraphStore((state) => state.isDraggingNode);
 
-  // Calculate opacity based on view mode and distance from current slice
+  // State for tab and label hover
+  const [tabHovered, setTabHovered] = useState(false);
+  const [labelHovered, setLabelHovered] = useState(false);
+
+  // Calculate opacity - non-current slices are much dimmer
   const planeOpacity = useMemo(() => {
-    if (viewMode === 'overview') {
-      // Overview mode: current slice slightly highlighted
-      return isCurrentSlice ? 0.15 : 0.08;
-    }
-    // Focus mode: current slice more visible, others dim based on distance
-    if (isCurrentSlice) return 0.2;
-    const distance = Math.abs(sliceIndex - currentSliceIndex);
-    return Math.max(0.02, 0.1 - distance * 0.02);
-  }, [viewMode, isCurrentSlice, sliceIndex, currentSliceIndex]);
+    if (isCurrentSlice) return 0.15;
+    return 0.02; // Much dimmer for non-current slices
+  }, [isCurrentSlice]);
 
   // Border color also adjusts in Focus mode
   const borderColor = useMemo(() => {
@@ -73,21 +72,19 @@ export function TimeSlicePlane({
   const edges = getEdgesArray(resolvedState);
 
   const handlePlaneClick = () => {
+    // Only allow clicks on the current slice
+    if (!isCurrentSlice) return;
+
     // Don't change slice if we're currently dragging a node
-    // (the click event can fire when releasing the mouse after a drag)
     if (isDraggingNode) return;
 
-    setCurrentSlice(sliceIndex);
     // Clear any node selection when clicking on the slice background
     clearNodeSelection();
   };
 
   const handleContextMenu = (e: ThreeEvent<MouseEvent>) => {
     // Only allow context menu on current slice
-    if (sliceIndex !== currentSliceIndex) {
-      setCurrentSlice(sliceIndex);
-      return;
-    }
+    if (!isCurrentSlice) return;
 
     e.stopPropagation();
     e.nativeEvent.preventDefault();
@@ -100,6 +97,10 @@ export function TimeSlicePlane({
       e.nativeEvent.clientX,
       e.nativeEvent.clientY
     );
+  };
+
+  const handleTabClick = () => {
+    setCurrentSlice(sliceIndex);
   };
 
   return (
@@ -126,29 +127,106 @@ export function TimeSlicePlane({
         lineWidth={1}
       />
 
-      {/* Time index - top right */}
-      <Text
-        position={[15.5, 15.5, 0.1]}
-        fontSize={0.5}
-        color={isCurrentSlice ? '#22d3ee' : '#6b7280'}
-        anchorX="right"
-      >
-        t={sliceIndex}
-      </Text>
-
-      {/* Slice label - bottom center */}
-      {slice.label && (
-        <Text
-          position={[0, -15, 0.1]}
-          fontSize={0.6}
-          color={isCurrentSlice ? '#e8e6e3' : '#5a5a5a'}
-          anchorX="center"
-          anchorY="top"
-          maxWidth={30}
+      {/* Folder tab on top-left edge - staggered position, always clickable */}
+      <group position={[-17, 14 - (sliceIndex * 1.8), 0]}>
+        <RoundedBox
+          args={[2, 1.2, 0.15]}
+          radius={0.1}
+          smoothness={4}
+          onClick={handleTabClick}
+          onPointerOver={() => {
+            setTabHovered(true);
+            document.body.style.cursor = 'pointer';
+          }}
+          onPointerOut={() => {
+            setTabHovered(false);
+            document.body.style.cursor = 'auto';
+          }}
         >
-          {slice.label}
+          <meshStandardMaterial
+            color={isCurrentSlice ? '#22d3ee' : (tabHovered ? '#475569' : '#334155')}
+            emissive={isCurrentSlice ? '#22d3ee' : '#000000'}
+            emissiveIntensity={isCurrentSlice ? 0.4 : 0}
+          />
+        </RoundedBox>
+        <Text
+          position={[0, 0, 0.1]}
+          fontSize={0.4}
+          color={isCurrentSlice ? '#0c0f14' : '#e8e6e3'}
+          anchorX="center"
+          anchorY="middle"
+        >
+          t={sliceIndex}
         </Text>
-      )}
+      </group>
+
+      {/* Slice description bar - bottom center with background */}
+      <group position={[0, -15.5, 0.05]}>
+        {/* Background bar */}
+        <RoundedBox
+          args={[20, 1.4, 0.1]}
+          radius={0.15}
+          smoothness={4}
+          onClick={(e: ThreeEvent<MouseEvent>) => {
+            if (isCurrentSlice) {
+              e.stopPropagation();
+              openEditDescription(sliceIndex);
+            }
+          }}
+          onPointerOver={() => {
+            if (isCurrentSlice) {
+              setLabelHovered(true);
+              document.body.style.cursor = 'pointer';
+            }
+          }}
+          onPointerOut={() => {
+            setLabelHovered(false);
+            document.body.style.cursor = 'auto';
+          }}
+        >
+          <meshStandardMaterial
+            color={isCurrentSlice ? (labelHovered ? '#1e293b' : '#0f172a') : '#0a0d12'}
+            transparent
+            opacity={isCurrentSlice ? 0.95 : 0.15}
+          />
+        </RoundedBox>
+        {/* Border outline */}
+        <mesh position={[0, 0, 0.01]}>
+          <planeGeometry args={[20.1, 1.5]} />
+          <meshBasicMaterial
+            color={isCurrentSlice ? '#334155' : '#1e293b'}
+            transparent
+            opacity={isCurrentSlice ? 0.8 : 0.15}
+          />
+        </mesh>
+        <RoundedBox
+          args={[20, 1.4, 0.12]}
+          radius={0.15}
+          smoothness={4}
+          position={[0, 0, -0.02]}
+        >
+          <meshBasicMaterial
+            color={isCurrentSlice ? '#334155' : '#1e293b'}
+            transparent
+            opacity={isCurrentSlice ? 1 : 0.15}
+          />
+        </RoundedBox>
+        {/* Description text */}
+        <Text
+          position={[0, 0, 0.1]}
+          fontSize={0.5}
+          color={
+            slice.label
+              ? (isCurrentSlice ? (labelHovered ? '#67e8f9' : '#e8e6e3') : '#3f4654')
+              : (isCurrentSlice ? (labelHovered ? '#67e8f9' : '#64748b') : '#2a2f3a')
+          }
+          anchorX="center"
+          anchorY="middle"
+          maxWidth={18}
+        >
+          {slice.label || 'Description...'}
+        </Text>
+      </group>
 
       {/* Render edges first (so they appear behind nodes) */}
       {(() => {

@@ -30,6 +30,7 @@ export function useKeyboardShortcuts() {
 
       switch (e.key) {
         case 'ArrowLeft':
+        case 'ArrowUp':
           e.preventDefault();
           stopPlayback();
           if (currentSliceIndex > 0) {
@@ -38,6 +39,7 @@ export function useKeyboardShortcuts() {
           break;
 
         case 'ArrowRight':
+        case 'ArrowDown':
           e.preventDefault();
           stopPlayback();
           if (currentSliceIndex < sliceCount - 1) {

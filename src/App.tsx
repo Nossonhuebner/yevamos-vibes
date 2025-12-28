@@ -31,6 +31,9 @@ function App() {
   const currentSliceIndex = useGraphStore((state) => state.currentSliceIndex);
   const removeSlice = useGraphStore((state) => state.removeSlice);
   const updateSliceLabel = useGraphStore((state) => state.updateSliceLabel);
+  const editDescriptionModal = useGraphStore((state) => state.editDescriptionModal);
+  const openEditDescription = useGraphStore((state) => state.openEditDescription);
+  const closeEditDescription = useGraphStore((state) => state.closeEditDescription);
   const resolvedState = useCurrentResolvedState();
   const { t } = useTranslation();
 
@@ -50,14 +53,6 @@ function App() {
     position: { x: number; y: number };
     relationshipId: string | null;
   }>({ isOpen: false, position: { x: 0, y: 0 }, relationshipId: null });
-
-  // Edit description modal state
-  const [editDescriptionModal, setEditDescriptionModal] = useState<{
-    isOpen: boolean;
-    position: { x: number; y: number };
-    sliceIndex: number;
-    currentLabel: string;
-  }>({ isOpen: false, position: { x: 0, y: 0 }, sliceIndex: 0, currentLabel: '' });
 
   // Toast notification state
   const [toast, setToast] = useState<{ message: string; visible: boolean; type: 'error' | 'info' }>({ message: '', visible: false, type: 'error' });
@@ -143,7 +138,6 @@ function App() {
       if (selectedNodeIds.length > 0) {
         clearNodeSelection();
       }
-      const currentSlice = graph.slices[target.sliceIndex];
       const items: ContextMenuItem[] = [
         {
           label: t('addPerson'),
@@ -158,12 +152,7 @@ function App() {
         {
           label: t('editDescription'),
           onClick: () => {
-            setEditDescriptionModal({
-              isOpen: true,
-              position: { x: contextMenu.screenX, y: contextMenu.screenY },
-              sliceIndex: target.sliceIndex,
-              currentLabel: currentSlice?.label || '',
-            });
+            openEditDescription(target.sliceIndex);
           },
         },
       ];
@@ -326,7 +315,7 @@ function App() {
     }
 
     return [];
-  }, [contextMenu, resolvedState, currentSliceIndex, markPersonDead, purgePerson, removeRelationship, updateRelationship, selectedNodeIds, addRelationship, clearNodeSelection, showToast, graph.slices.length, removeSlice, t]);
+  }, [contextMenu, resolvedState, currentSliceIndex, markPersonDead, purgePerson, removeRelationship, updateRelationship, selectedNodeIds, addRelationship, clearNodeSelection, showToast, graph.slices.length, removeSlice, openEditDescription, t]);
 
   const handleAddPerson = useCallback((name: string, gender: 'male' | 'female') => {
     addPerson({
@@ -386,14 +375,13 @@ function App() {
       />
 
       {/* Edit Description Modal */}
-      {editDescriptionModal.isOpen && (
+      {editDescriptionModal && (
         <EditDescriptionModal
-          position={editDescriptionModal.position}
-          currentLabel={editDescriptionModal.currentLabel}
-          onClose={() => setEditDescriptionModal(prev => ({ ...prev, isOpen: false }))}
+          currentLabel={graph.slices[editDescriptionModal.sliceIndex]?.label || ''}
+          onClose={closeEditDescription}
           onSubmit={(label) => {
             updateSliceLabel(editDescriptionModal.sliceIndex, label);
-            setEditDescriptionModal(prev => ({ ...prev, isOpen: false }));
+            closeEditDescription();
           }}
         />
       )}
