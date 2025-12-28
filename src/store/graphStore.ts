@@ -771,7 +771,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   loadGraph: (graph) => {
     set({
       graph,
-      currentSliceIndex: 0,
+      currentSliceIndex: Math.max(0, graph.slices.length - 1), // Skip to last slice
       selectedNodeIds: [],
       selectedEdgeId: null,
       resolvedStates: recomputeResolvedStates(graph),
