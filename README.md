@@ -100,15 +100,27 @@ This approach offers several advantages:
 
 ### Relationship Types
 
+In Halacha, a full Jewish marriage has two stages: *erusin* (betrothal/kiddushin) and *nisuin* (full marriage). A woman who has undergone erusin is forbidden to other men, but the marriage is not yet complete until nisuin is performed. Either stage can be dissolved through divorce.
+
 | Type | Visual Style | Description |
 |------|--------------|-------------|
-| `marriage` | Solid green | Active marriage |
+| `erusin` | Solid pink | Betrothal - first stage of marriage |
+| `nisuin` | Pink with light blue sandwich | Full marriage - both stages complete |
 | `divorce` | Dashed red | Dissolved marriage |
 | `yibum` | Solid gold (thick) | Levirate marriage performed |
 | `chalitzah` | Dashed purple | Release ceremony performed |
 | `parent-child` | Solid cyan with arrow | Parent-child relationship |
 | `sibling` | Solid gray (thin) | Sibling relationship |
 | `unmarried-relations` | Dotted orange | Non-marital relationship |
+
+**Relationship transitions:**
+- Unmarried → Erusin (betrothal only)
+- Unmarried → Nisuin (both stages at once)
+- Erusin → Nisuin (complete the marriage)
+- Erusin → Divorce
+- Nisuin → Divorce
+
+Children can be added to any of: erusin, nisuin, or unmarried-relations.
 
 ### 3D Rendering
 

@@ -130,8 +130,8 @@ export function TimeSlicePlane({
       {/* Folder tab on top-left edge - staggered position, always clickable */}
       <group position={[-17, 14 - (sliceIndex * 1.8), 0]}>
         <RoundedBox
-          args={[2, 1.2, 0.15]}
-          radius={0.1}
+          args={[1.6, 0.9, 0.08]}
+          radius={0.08}
           smoothness={4}
           onClick={handleTabClick}
           onPointerOver={() => {
@@ -144,15 +144,17 @@ export function TimeSlicePlane({
           }}
         >
           <meshStandardMaterial
-            color={isCurrentSlice ? '#22d3ee' : (tabHovered ? '#475569' : '#334155')}
+            color={isCurrentSlice ? '#1e293b' : (tabHovered ? '#1e293b' : '#151922')}
             emissive={isCurrentSlice ? '#22d3ee' : '#000000'}
-            emissiveIntensity={isCurrentSlice ? 0.4 : 0}
+            emissiveIntensity={isCurrentSlice ? 0.15 : 0}
+            transparent
+            opacity={isCurrentSlice ? 0.95 : (tabHovered ? 0.8 : 0.6)}
           />
         </RoundedBox>
         <Text
-          position={[0, 0, 0.1]}
-          fontSize={0.4}
-          color={isCurrentSlice ? '#0c0f14' : '#e8e6e3'}
+          position={[0, 0, 0.06]}
+          fontSize={0.32}
+          color={isCurrentSlice ? '#22d3ee' : (tabHovered ? '#94a3b8' : '#64748b')}
           anchorX="center"
           anchorY="middle"
         >
@@ -262,9 +264,10 @@ export function TimeSlicePlane({
           const isInvolvingDeadPerson =
             isPersonDead(sourceNode, sliceIndex) || isPersonDead(targetNode, sliceIndex);
 
-          // Check if this is a marriage/unmarried-relations with children
+          // Check if this is a relationship type that can have children
           const hasChildren = edge.childIds && edge.childIds.length > 0;
-          if (hasChildren && (edge.type === 'marriage' || edge.type === 'unmarried-relations')) {
+          const canHaveChildren = edge.type === 'erusin' || edge.type === 'nisuin' || edge.type === 'divorce' || edge.type === 'unmarried-relations';
+          if (hasChildren && canHaveChildren) {
             // Gather child nodes
             const childNodes: Person[] = edge.childIds!
               .map(id => resolvedState.nodes.get(id))

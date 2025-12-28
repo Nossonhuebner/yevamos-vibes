@@ -2,16 +2,19 @@ import { useEffect } from 'react';
 import { useGraphStore } from '@/store/graphStore';
 
 /**
- * Global keyboard shortcuts for the walkthrough feature.
+ * Global keyboard shortcuts for the application.
  * - Left/Right arrows: Navigate between slices (stops playback)
  * - Space: Toggle play/pause (Focus mode only)
- * - Escape: Exit Focus mode
+ * - Escape: Exit Focus mode / clear selection
+ * - Delete/Backspace: Delete selected nodes (with confirmation)
  */
 export function useKeyboardShortcuts() {
   const setCurrentSlice = useGraphStore((state) => state.setCurrentSlice);
   const togglePlayback = useGraphStore((state) => state.togglePlayback);
   const stopPlayback = useGraphStore((state) => state.stopPlayback);
   const setViewMode = useGraphStore((state) => state.setViewMode);
+  const purgePerson = useGraphStore((state) => state.purgePerson);
+  const clearNodeSelection = useGraphStore((state) => state.clearNodeSelection);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -25,7 +28,7 @@ export function useKeyboardShortcuts() {
       }
 
       const state = useGraphStore.getState();
-      const { currentSliceIndex, graph, viewMode } = state;
+      const { currentSliceIndex, graph, viewMode, selectedNodeIds, resolvedStates } = state;
       const sliceCount = graph.slices.length;
 
       switch (e.key) {
@@ -55,10 +58,36 @@ export function useKeyboardShortcuts() {
           break;
 
         case 'Escape':
-          if (viewMode === 'focus') {
-            e.preventDefault();
+          e.preventDefault();
+          if (selectedNodeIds.length > 0) {
+            clearNodeSelection();
+          } else if (viewMode === 'focus') {
             stopPlayback();
             setViewMode('overview');
+          }
+          break;
+
+        case 'Delete':
+        case 'Backspace':
+          if (selectedNodeIds.length > 0) {
+            e.preventDefault();
+            // Get names for confirmation message
+            const currentState = resolvedStates[currentSliceIndex];
+            const names = selectedNodeIds
+              .map(id => currentState?.nodes.get(id)?.name || 'Unknown')
+              .join(', ');
+
+            const message = selectedNodeIds.length === 1
+              ? `Delete "${names}"? This will remove them from all slices.`
+              : `Delete ${selectedNodeIds.length} people (${names})? This will remove them from all slices.`;
+
+            if (window.confirm(message)) {
+              // Delete all selected nodes
+              selectedNodeIds.forEach(nodeId => {
+                purgePerson(nodeId);
+              });
+              clearNodeSelection();
+            }
           }
           break;
       }
@@ -66,5 +95,5 @@ export function useKeyboardShortcuts() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [setCurrentSlice, togglePlayback, stopPlayback, setViewMode]);
+  }, [setCurrentSlice, togglePlayback, stopPlayback, setViewMode, purgePerson, clearNodeSelection]);
 }

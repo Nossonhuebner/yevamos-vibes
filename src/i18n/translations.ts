@@ -51,12 +51,17 @@ export const translations = {
 
     // Relationship Types
     marriage: 'Marriage',
+    erusin: 'Erusin',
+    nisuin: 'Nisuin',
+    erusinDescription: 'Betrothal',
+    nisuinDescription: 'Full marriage',
     divorce: 'Divorce',
     yibum: 'Yibum',
     chalitzah: 'Chalitzah',
     parentChild: 'Parent-Child',
     sibling: 'Sibling',
     unmarriedRelations: 'Unmarried Relations',
+    extraMaritalRelations: 'Extra-Marital Relations',
 
     // Add Person Modal
     addPerson: 'Add Person',
@@ -80,13 +85,16 @@ export const translations = {
     markAsDead: 'Mark as Dead',
     removeFromAllSlices: 'Remove from All Slices',
     removePersonConfirm: 'from ALL slices? This cannot be undone.',
-    addMarriage: 'Add Marriage',
+    addRelation: 'Add Relation',
     addUnmarriedRelations: 'Add Unmarried Relations',
+    addExtraMaritalRelations: 'Add Extra-Marital Relations',
     sameGenderError: 'Cannot add relationship between two people of the same sex',
 
     // Context Menu - Edge
+    enterNisuin: 'Enter Nisuin',
     markAsDivorced: 'Mark as Divorced',
     removeRelationship: 'Remove Relationship',
+    create: 'Create',
 
     // Language
     language: 'Language',
@@ -149,12 +157,17 @@ export const translations = {
 
     // Relationship Types
     marriage: 'נישואין',
+    erusin: 'אירוסין',
+    nisuin: 'נישואין',
+    erusinDescription: 'קידושין',
+    nisuinDescription: 'נישואין גמורים',
     divorce: 'גירושין',
     yibum: 'יבום',
     chalitzah: 'חליצה',
     parentChild: 'הורה-ילד',
     sibling: 'אח/ות',
     unmarriedRelations: 'זוגיות ללא נישואין',
+    extraMaritalRelations: 'יחסים מחוץ לנישואין',
 
     // Add Person Modal
     addPerson: 'הוסף אדם',
@@ -178,13 +191,16 @@ export const translations = {
     markAsDead: 'סמן כנפטר',
     removeFromAllSlices: 'הסר מכל הפרוסות',
     removePersonConfirm: 'מכל הפרוסות? פעולה זו אינה ניתנת לביטול.',
-    addMarriage: 'הוסף נישואין',
+    addRelation: 'הוסף יחס',
     addUnmarriedRelations: 'הוסף זוגיות ללא נישואין',
+    addExtraMaritalRelations: 'הוסף יחסים מחוץ לנישואין',
     sameGenderError: 'לא ניתן להוסיף יחס בין שני אנשים מאותו מין',
 
     // Context Menu - Edge
+    enterNisuin: 'כניסה לנישואין',
     markAsDivorced: 'סמן כגרוש',
     removeRelationship: 'הסר יחס',
+    create: 'צור',
 
     // Language
     language: 'שפה',
@@ -202,7 +218,8 @@ export type TranslationKey = keyof typeof translations.en;
 
 // Helper to get relationship label key
 export const relationshipTypeToKey: Record<string, TranslationKey> = {
-  'marriage': 'marriage',
+  'erusin': 'erusin',
+  'nisuin': 'nisuin',
   'divorce': 'divorce',
   'yibum': 'yibum',
   'chalitzah': 'chalitzah',

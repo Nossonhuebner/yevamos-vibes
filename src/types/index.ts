@@ -31,7 +31,8 @@ export function getRandomNodeColor(): string {
 }
 
 export type RelationshipType =
-  | 'marriage'
+  | 'erusin'      // Betrothal/engagement - first stage of halachic marriage
+  | 'nisuin'      // Full marriage - second stage (erusin + nisuin)
   | 'divorce'
   | 'yibum'
   | 'chalitzah'
@@ -45,9 +46,10 @@ export interface Relationship {
   sourceId: string;
   targetId: string;
   label?: string;
-  childIds?: string[]; // For marriage/unmarried-relations: IDs of children connected to this relationship
+  childIds?: string[]; // For erusin/nisuin/unmarried-relations: IDs of children connected to this relationship
   hidden?: boolean; // If true, don't render this edge (used for parent-child edges that are part of a T-shape)
   introducedSliceIndex: number; // Slice where this relationship was created
+  divorceFromNisuin?: boolean; // True if divorced from nisuin (shows blue lines), false/undefined if from erusin
 }
 
 // Temporal events - things that happen at specific points in time
@@ -91,17 +93,19 @@ export interface RelationshipStyle {
 }
 
 export const RELATIONSHIP_STYLES: Record<RelationshipType, RelationshipStyle> = {
-  'marriage': { color: '#34d399', lineStyle: 'solid', lineWidth: 2 },
-  'divorce': { color: '#f87171', lineStyle: 'dashed', lineWidth: 2 },
-  'yibum': { color: '#fbbf24', lineStyle: 'solid', lineWidth: 3 },
-  'chalitzah': { color: '#c084fc', lineStyle: 'dashed', lineWidth: 2 },
-  'parent-child': { color: '#22d3ee', lineStyle: 'solid', lineWidth: 2 },
-  'sibling': { color: '#94a3b8', lineStyle: 'solid', lineWidth: 1 },
-  'unmarried-relations': { color: '#fb923c', lineStyle: 'dotted', lineWidth: 2 },
+  'erusin': { color: '#f472b6', lineStyle: 'solid', lineWidth: 3 },      // Pink
+  'nisuin': { color: '#f472b6', lineStyle: 'solid', lineWidth: 3 },      // Pink (sandwich effect handled in component)
+  'divorce': { color: '#f87171', lineStyle: 'dashed', lineWidth: 3 },
+  'yibum': { color: '#fbbf24', lineStyle: 'solid', lineWidth: 4 },
+  'chalitzah': { color: '#c084fc', lineStyle: 'dashed', lineWidth: 3 },
+  'parent-child': { color: '#22d3ee', lineStyle: 'solid', lineWidth: 3 },
+  'sibling': { color: '#94a3b8', lineStyle: 'solid', lineWidth: 2 },
+  'unmarried-relations': { color: '#fb923c', lineStyle: 'dotted', lineWidth: 3 },
 };
 
 export const RELATIONSHIP_LABELS: Record<RelationshipType, string> = {
-  'marriage': 'Marriage',
+  'erusin': 'Erusin',
+  'nisuin': 'Nisuin',
   'divorce': 'Divorce',
   'yibum': 'Yibum',
   'chalitzah': 'Chalitzah',

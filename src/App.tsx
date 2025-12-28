@@ -6,6 +6,7 @@ import { Legend } from './components/Legend';
 import { ContextMenu, ContextMenuItem } from './components/ContextMenu';
 import { SelectionBox } from './components/SelectionBox';
 import { AddPersonModal } from './components/AddPersonModal';
+import { AddRelationModal } from './components/AddRelationModal';
 import { EditDescriptionModal } from './components/EditDescriptionModal';
 import { useGraphStore, useCurrentResolvedState } from './store/graphStore';
 import { loadFromLocalStorage, saveToLocalStorage, getGraphFromUrl, clearUrlData } from './utils/persistence';
@@ -53,6 +54,15 @@ function App() {
     position: { x: number; y: number };
     relationshipId: string | null;
   }>({ isOpen: false, position: { x: 0, y: 0 }, relationshipId: null });
+
+  // Add Relation modal state (for erusin/nisuin selection)
+  const [addRelationModal, setAddRelationModal] = useState<{
+    isOpen: boolean;
+    sourceId: string;
+    targetId: string;
+    personAName: string;
+    personBName: string;
+  }>({ isOpen: false, sourceId: '', targetId: '', personAName: '', personBName: '' });
 
   // Toast notification state
   const [toast, setToast] = useState<{ message: string; visible: boolean; type: 'error' | 'info' }>({ message: '', visible: false, type: 'error' });
@@ -190,66 +200,82 @@ function App() {
             return [];
           }
 
-          // Check if these two are already married to each other
+          // Check if these two have an existing marriage relationship (erusin or nisuin)
           const existingMarriage = Array.from(resolvedState.edges.values()).find(
             (edge) =>
-              edge.type === 'marriage' &&
+              (edge.type === 'erusin' || edge.type === 'nisuin') &&
               ((edge.sourceId === selectedNodeId && edge.targetId === target.personId) ||
                 (edge.sourceId === target.personId && edge.targetId === selectedNodeId))
           );
 
           if (existingMarriage) {
-            // They are married - only show divorce option
-            return [
-              {
-                label: `${t('divorce')}: ${selectedPerson.name} & ${person.name}`,
+            // They are in erusin or nisuin - show appropriate options
+            const items: ContextMenuItem[] = [];
+
+            if (existingMarriage.type === 'erusin') {
+              // Erusin state: can enter nisuin or divorce
+              items.push({
+                label: `${t('enterNisuin')}: ${selectedPerson.name} & ${person.name}`,
                 onClick: () => {
-                  updateRelationship(existingMarriage.id, { type: 'divorce' });
+                  updateRelationship(existingMarriage.id, { type: 'nisuin' });
                   clearNodeSelection();
                 },
+              });
+            }
+
+            // Both erusin and nisuin can divorce
+            items.push({
+              label: `${t('divorce')}: ${selectedPerson.name} & ${person.name}`,
+              onClick: () => {
+                updateRelationship(existingMarriage.id, { type: 'divorce' });
+                clearNodeSelection();
               },
-            ];
+            });
+
+            return items;
           }
 
           // Determine who is the woman
           const woman = selectedPerson.gender === 'female' ? selectedPerson : person;
 
-          // Check if the woman is currently married (has an active marriage)
-          const womanIsMarried = Array.from(resolvedState.edges.values()).some(
+          // Check if the woman is currently married (has an active erusin or nisuin with anyone)
+          const womanMarriage = Array.from(resolvedState.edges.values()).find(
             (edge) =>
-              edge.type === 'marriage' &&
+              (edge.type === 'erusin' || edge.type === 'nisuin') &&
               (edge.sourceId === woman.id || edge.targetId === woman.id)
           );
 
           const items: ContextMenuItem[] = [];
 
-          // Marriage option - only if woman is not already married
-          if (!womanIsMarried) {
+          if (womanMarriage) {
+            // Woman is married to someone else - only show extra-marital relations option
             items.push({
-              label: `${t('addMarriage')}: ${selectedPerson.name} & ${person.name}`,
+              label: `${t('addExtraMaritalRelations')}: ${selectedPerson.name} & ${person.name}`,
               onClick: () => {
                 addRelationship({
-                  type: 'marriage',
+                  type: 'unmarried-relations',
                   sourceId: selectedNodeId,
                   targetId: target.personId,
                 });
                 clearNodeSelection();
               },
             });
+          } else {
+            // Woman is unmarried - show Add Relation option (opens modal with marriage/unmarried choice)
+            items.push({
+              label: `${t('addRelation')}: ${selectedPerson.name} & ${person.name}`,
+              onClick: () => {
+                setAddRelationModal({
+                  isOpen: true,
+                  sourceId: selectedNodeId,
+                  targetId: target.personId,
+                  personAName: selectedPerson.name,
+                  personBName: person.name,
+                });
+                clearNodeSelection();
+              },
+            });
           }
-
-          // Unmarried relations - always available for opposite sex
-          items.push({
-            label: `${t('addUnmarriedRelations')}: ${selectedPerson.name} & ${person.name}`,
-            onClick: () => {
-              addRelationship({
-                type: 'unmarried-relations',
-                sourceId: selectedNodeId,
-                targetId: target.personId,
-              });
-              clearNodeSelection();
-            },
-          });
 
           return items;
         }
@@ -284,8 +310,8 @@ function App() {
 
       const items: ContextMenuItem[] = [];
 
-      // Add Child option for marriage and unmarried-relations
-      if (edge.type === 'marriage' || edge.type === 'unmarried-relations') {
+      // Add Child option for erusin, nisuin, and unmarried-relations
+      if (edge.type === 'erusin' || edge.type === 'nisuin' || edge.type === 'unmarried-relations') {
         items.push({
           label: t('addChild'),
           onClick: () => {
@@ -298,7 +324,16 @@ function App() {
         });
       }
 
-      if (edge.type === 'marriage') {
+      // For erusin: option to enter nisuin
+      if (edge.type === 'erusin') {
+        items.push({
+          label: t('enterNisuin'),
+          onClick: () => updateRelationship(target.edgeId, { type: 'nisuin' }),
+        });
+      }
+
+      // For erusin and nisuin: option to divorce
+      if (edge.type === 'erusin' || edge.type === 'nisuin') {
         items.push({
           label: t('markAsDivorced'),
           onClick: () => updateRelationship(target.edgeId, { type: 'divorce' }),
@@ -330,6 +365,16 @@ function App() {
       addChildToRelationship(addChildModal.relationshipId, { name, gender, position: { x: 0, y: 0 } });
     }
   }, [addChildToRelationship, addChildModal.relationshipId]);
+
+  const handleAddRelation = useCallback((type: 'unmarried-relations' | 'erusin' | 'nisuin') => {
+    if (!addRelationModal.sourceId || !addRelationModal.targetId) return;
+
+    addRelationship({
+      type,
+      sourceId: addRelationModal.sourceId,
+      targetId: addRelationModal.targetId,
+    });
+  }, [addRelationship, addRelationModal.sourceId, addRelationModal.targetId]);
 
   return (
     <div className="app-container">
@@ -374,6 +419,15 @@ function App() {
         titleKey="addChild"
       />
 
+      {/* Add Relation Modal (erusin/nisuin selection) */}
+      <AddRelationModal
+        isOpen={addRelationModal.isOpen}
+        personAName={addRelationModal.personAName}
+        personBName={addRelationModal.personBName}
+        onClose={() => setAddRelationModal(prev => ({ ...prev, isOpen: false }))}
+        onSubmit={handleAddRelation}
+      />
+
       {/* Edit Description Modal */}
       {editDescriptionModal && (
         <EditDescriptionModal
@@ -385,6 +439,41 @@ function App() {
           }}
         />
       )}
+
+      {/* GitHub Link */}
+      <a
+        href="https://github.com/Nossonhuebner/yevamos-vibes"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          position: 'fixed',
+          bottom: '16px',
+          right: '16px',
+          color: '#64748b',
+          opacity: 0.7,
+          transition: 'opacity 0.2s, color 0.2s',
+          zIndex: 50,
+        }}
+        onMouseOver={(e) => {
+          e.currentTarget.style.opacity = '1';
+          e.currentTarget.style.color = '#f8fafc';
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.opacity = '0.7';
+          e.currentTarget.style.color = '#64748b';
+        }}
+        title="View on GitHub"
+      >
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+        </svg>
+      </a>
 
       {/* Toast Notification */}
       {toast.visible && (

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Text, RoundedBox } from '@react-three/drei';
+import { Text } from '@react-three/drei';
 import { useFrame, ThreeEvent, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Person } from '@/types';
@@ -77,14 +77,27 @@ export function PersonNode({ person, sliceIndex, isCurrentSlice }: PersonNodePro
     document.body.style.cursor = 'auto';
   }, [setIsDraggingNode]);
 
-  // Global mouse move during drag
-  const onMouseMove = useCallback((e: MouseEvent) => {
+  // Handle pointer/touch move during drag (works for both mouse and touch)
+  const onPointerMove = useCallback((e: PointerEvent | TouchEvent) => {
     if (!isDragging || !dragStartPosition || !groupInitialPositions) return;
 
-    // Convert mouse position to normalized device coordinates
+    // Prevent default to stop scrolling on mobile
+    e.preventDefault();
+
+    // Get client coordinates (handle both mouse and touch)
+    let clientX: number, clientY: number;
+    if ('touches' in e) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    // Convert to normalized device coordinates
     const rect = gl.domElement.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-    const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    const x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    const y = -((clientY - rect.top) / rect.height) * 2 + 1;
 
     // Raycast to find intersection with the XY plane at z=0
     raycaster.current.setFromCamera(new THREE.Vector2(x, y), camera);
@@ -120,24 +133,34 @@ export function PersonNode({ person, sliceIndex, isCurrentSlice }: PersonNodePro
     }
   }, [isDragging, dragStartPosition, groupInitialPositions, isGroupDrag, selectedNodeIds, camera, gl.domElement, person.id, updatePersonPosition, updateMultiplePositions]);
 
-  // Global mouse up to end drag
-  const onMouseUp = useCallback(() => {
+  // End drag on pointer/touch up
+  const onPointerUp = useCallback(() => {
     if (isDragging) {
       endDrag();
     }
   }, [isDragging, endDrag]);
 
-  // Add/remove global listeners when dragging
+  // Add/remove global listeners when dragging (both mouse and touch)
   useEffect(() => {
     if (isDragging) {
-      window.addEventListener('mousemove', onMouseMove);
-      window.addEventListener('mouseup', onMouseUp);
+      // Use pointer events for unified mouse/touch handling
+      window.addEventListener('pointermove', onPointerMove as EventListener);
+      window.addEventListener('pointerup', onPointerUp);
+      window.addEventListener('pointercancel', onPointerUp);
+      // Also add touch events as fallback for better mobile support
+      window.addEventListener('touchmove', onPointerMove as EventListener, { passive: false });
+      window.addEventListener('touchend', onPointerUp);
+      window.addEventListener('touchcancel', onPointerUp);
       return () => {
-        window.removeEventListener('mousemove', onMouseMove);
-        window.removeEventListener('mouseup', onMouseUp);
+        window.removeEventListener('pointermove', onPointerMove as EventListener);
+        window.removeEventListener('pointerup', onPointerUp);
+        window.removeEventListener('pointercancel', onPointerUp);
+        window.removeEventListener('touchmove', onPointerMove as EventListener);
+        window.removeEventListener('touchend', onPointerUp);
+        window.removeEventListener('touchcancel', onPointerUp);
       };
     }
-  }, [isDragging, onMouseMove, onMouseUp]);
+  }, [isDragging, onPointerMove, onPointerUp]);
 
   const handleNodeClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
@@ -219,15 +242,33 @@ export function PersonNode({ person, sliceIndex, isCurrentSlice }: PersonNodePro
     }
   });
 
+  // Opacity values
+  const nodeOpacity = isDead ? 0.25 : (isCurrentSlice ? 1 : 0.25);
+  const shadowOpacity = isCurrentSlice ? 0.4 : 0.05;
+
   // Position on vertical XY plane
   return (
     <group position={[displayPosition.x, displayPosition.y, 0.1]}>
-      {/* Node rounded box */}
-      <RoundedBox
+      {/* Shadow disc - offset behind and below for depth */}
+      <mesh position={[0.06, -0.06, -0.05]} rotation={[0, 0, 0]}>
+        <circleGeometry args={[0.48, 32]} />
+        <meshBasicMaterial color="#000000" transparent opacity={shadowOpacity} />
+      </mesh>
+
+      {/* Outer rim/border for depth */}
+      <mesh position={[0, 0, -0.02]} rotation={[0, 0, 0]}>
+        <ringGeometry args={[0.42, 0.5, 32]} />
+        <meshBasicMaterial
+          color={isCurrentSlice ? '#1e293b' : '#0f172a'}
+          transparent
+          opacity={isCurrentSlice ? 0.8 : 0.15}
+        />
+      </mesh>
+
+      {/* Node circular disc */}
+      <mesh
         ref={meshRef}
-        args={[0.6, 0.6, 0.15]}
-        radius={0.1}
-        smoothness={4}
+        rotation={[Math.PI / 2, 0, 0]}
         onClick={handleNodeClick}
         onContextMenu={handleContextMenu}
         onPointerOver={() => {
@@ -243,44 +284,61 @@ export function PersonNode({ person, sliceIndex, isCurrentSlice }: PersonNodePro
           }
         }}
       >
+        <cylinderGeometry args={[0.42, 0.42, 0.1, 32]} />
         <meshStandardMaterial
           color={color}
           emissive={
-            isHighlightedAsNew ? '#34d399' :  // Green glow for new nodes
-            isHighlightedAsDead ? '#f87171' :  // Red glow for death highlight
-            isSelected ? '#22d3ee' : '#000000'
+            isHighlightedAsNew ? '#34d399' :
+            isHighlightedAsDead ? '#f87171' :
+            isSelected ? '#22d3ee' :
+            (isCurrentSlice ? baseColor : '#000000')
           }
           emissiveIntensity={
             isHighlightedAsNew || isHighlightedAsDead ? glowIntensity :
-            isSelected ? 0.3 : 0
+            isSelected ? 0.4 :
+            (isCurrentSlice ? 0.15 : 0)
           }
           transparent
-          opacity={isDead ? 0.3 : (isCurrentSlice ? 1 : 0.5)}
+          opacity={nodeOpacity}
+          roughness={0.4}
+          metalness={0.1}
         />
-      </RoundedBox>
+      </mesh>
+
+      {/* Inner highlight for glossy effect */}
+      {isCurrentSlice && !isDead && (
+        <mesh position={[-0.08, 0.08, 0.06]} rotation={[0, 0, 0]}>
+          <circleGeometry args={[0.12, 16]} />
+          <meshBasicMaterial color="#ffffff" transparent opacity={0.15} />
+        </mesh>
+      )}
 
       {/* Person emoji on the node */}
       <EmojiSprite
         emoji={emoji}
         position={[0, 0, 0.1]}
-        size={0.45}
-        opacity={isDead ? 0.4 : 1}
+        size={0.42}
+        opacity={isDead ? 0.25 : (isCurrentSlice ? 1 : 0.12)}
       />
 
       {/* Selection ring */}
       {isSelected && (
-        <mesh position={[0, 0, 0.01]}>
-          <ringGeometry args={[0.4, 0.5, 32]} />
-          <meshBasicMaterial color="#22d3ee" transparent opacity={0.5} />
+        <mesh position={[0, 0, 0.02]}>
+          <ringGeometry args={[0.46, 0.52, 32]} />
+          <meshBasicMaterial color="#22d3ee" transparent opacity={0.6} />
         </mesh>
       )}
 
       {/* Drag handle - only visible on current slice, not dead */}
       {isCurrentSlice && !isDead && (
-        <group position={[0, -0.45, 0.1]}>
-          {/* Handle background */}
+        <group position={[0, -0.55, 0.1]}>
+          {/* Handle background - larger for easier touch targeting */}
           <mesh
-            onPointerDown={handleDragStart}
+            onPointerDown={(e) => {
+              // Prevent camera controls from intercepting touch/pointer
+              e.stopPropagation();
+              handleDragStart(e);
+            }}
             onPointerOver={() => {
               setHandleHovered(true);
               if (!isDragging) {
@@ -294,17 +352,17 @@ export function PersonNode({ person, sliceIndex, isCurrentSlice }: PersonNodePro
               }
             }}
           >
-            <circleGeometry args={[0.15, 16]} />
+            <circleGeometry args={[0.22, 24]} />
             <meshStandardMaterial
               color={handleHovered || isDragging ? '#22d3ee' : '#334155'}
               transparent
               opacity={0.9}
             />
           </mesh>
-          {/* Drag icon (four arrows pattern) */}
+          {/* Drag icon (grip pattern) */}
           <Text
             position={[0, 0, 0.02]}
-            fontSize={0.12}
+            fontSize={0.16}
             color="#ffffff"
             anchorX="center"
             anchorY="middle"
@@ -316,11 +374,14 @@ export function PersonNode({ person, sliceIndex, isCurrentSlice }: PersonNodePro
 
       {/* Name label - above node */}
       <Text
-        position={[0, 0.55, 0.1]}
-        fontSize={0.22}
-        color={isDead ? '#6b7280' : (isCurrentSlice ? '#f8fafc' : '#94a3b8')}
+        position={[0, 0.6, 0.1]}
+        fontSize={0.2}
+        color={isDead ? '#6b7280' : (isCurrentSlice ? '#f8fafc' : '#475569')}
         anchorX="center"
         anchorY="bottom"
+        fillOpacity={isCurrentSlice ? 1 : 0.15}
+        outlineWidth={isCurrentSlice ? 0.012 : 0}
+        outlineColor="#0f172a"
       >
         {person.name}
       </Text>

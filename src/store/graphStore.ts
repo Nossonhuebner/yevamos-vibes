@@ -535,7 +535,10 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   },
 
   updateRelationship: (edgeId, changes) => {
-    const { currentSliceIndex, graph } = get();
+    const { currentSliceIndex, graph, resolvedStates } = get();
+    const currentState = resolvedStates[currentSliceIndex];
+    // Get the resolved edge state (not the global definition)
+    const resolvedEdge = currentState?.edges.get(edgeId);
     const edge = graph.edges[edgeId];
     if (!edge) return;
 
@@ -543,12 +546,18 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     // For static changes (like childIds), update the global edge directly
 
     // Check if this is a type change (temporal event)
-    if (changes.type && changes.type !== edge.type) {
+    if (changes.type && changes.type !== (resolvedEdge?.type || edge.type)) {
+      // If divorcing from nisuin, set the divorceFromNisuin flag
+      const updatedChanges = { ...changes };
+      if (changes.type === 'divorce' && (resolvedEdge?.type || edge.type) === 'nisuin') {
+        updatedChanges.divorceFromNisuin = true;
+      }
+
       // Add updateEdge event to current slice
       const newSlices = [...graph.slices];
       newSlices[currentSliceIndex] = {
         ...newSlices[currentSliceIndex],
-        events: [...newSlices[currentSliceIndex].events, { type: 'updateEdge', edgeId, changes }],
+        events: [...newSlices[currentSliceIndex].events, { type: 'updateEdge', edgeId, changes: updatedChanges }],
       };
 
       const newGraph = {
@@ -585,8 +594,8 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     const relationship = currentState.edges.get(edgeId);
     if (!relationship) return null;
 
-    // Only allow for marriage or unmarried-relations
-    if (relationship.type !== 'marriage' && relationship.type !== 'unmarried-relations') {
+    // Only allow for erusin, nisuin, or unmarried-relations
+    if (relationship.type !== 'erusin' && relationship.type !== 'nisuin' && relationship.type !== 'unmarried-relations') {
       return null;
     }
 

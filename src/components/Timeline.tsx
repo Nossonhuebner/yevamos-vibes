@@ -38,16 +38,17 @@ export function Timeline() {
 
   return (
     <div className="timeline-container">
-      <div className="timeline-controls">
-        <button
-          className="btn btn-secondary btn-sm"
-          onClick={handlePrev}
-          disabled={currentSliceIndex === 0}
-        >
-          ←
-        </button>
-      </div>
+      {/* Navigation buttons */}
+      <button
+        className="btn btn-secondary btn-sm"
+        onClick={handlePrev}
+        disabled={currentSliceIndex === 0}
+        title="Previous slice (←)"
+      >
+        ◀
+      </button>
 
+      {/* Slider */}
       <div className="timeline-slider">
         <input
           type="range"
@@ -58,31 +59,37 @@ export function Timeline() {
         />
       </div>
 
-      <div className="timeline-label">
-        {currentSlice?.label || `t=${currentSliceIndex}`}
-        <span style={{ color: '#64748b', marginLeft: '8px' }}>
-          ({currentSliceIndex + 1}/{slices.length})
-        </span>
-      </div>
+      <button
+        className="btn btn-secondary btn-sm"
+        onClick={handleNext}
+        disabled={currentSliceIndex === slices.length - 1}
+        title="Next slice (→)"
+      >
+        ▶
+      </button>
 
-      <div className="timeline-controls">
-        <button
-          className="btn btn-secondary btn-sm"
-          onClick={handleNext}
-          disabled={currentSliceIndex === slices.length - 1}
-        >
-          →
-        </button>
-        {viewMode === 'overview' && (
-          <button
-            className="btn btn-primary btn-sm"
-            onClick={handleAddSlice}
-            title={t('addNewSlice')}
-          >
-            +
-          </button>
+      {/* Slice label */}
+      <div className="timeline-label">
+        <span style={{ color: '#94a3b8' }}>
+          {currentSliceIndex + 1}/{slices.length}
+        </span>
+        {currentSlice?.label && (
+          <span style={{ marginLeft: '6px', color: '#f8fafc' }}>
+            {currentSlice.label}
+          </span>
         )}
       </div>
+
+      {/* Add slice button (only in overview mode) */}
+      {viewMode === 'overview' && (
+        <button
+          className="btn btn-primary btn-sm"
+          onClick={handleAddSlice}
+          title={t('addNewSlice')}
+        >
+          +
+        </button>
+      )}
 
       {/* Playback controls (only visible in Focus mode) */}
       <PlaybackControls />

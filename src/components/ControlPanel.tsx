@@ -4,7 +4,7 @@ import { getNodesArray, getEdgesArray, isPersonDead } from '@/utils/deltaResolve
 import { RelationshipType, RELATIONSHIP_LABELS, RELATIONSHIP_STYLES, Person } from '@/types';
 
 // Relationship types that can be created between two people
-const COUPLE_RELATIONSHIP_TYPES: RelationshipType[] = ['marriage', 'divorce', 'yibum', 'chalitzah', 'unmarried-relations'];
+const COUPLE_RELATIONSHIP_TYPES: RelationshipType[] = ['erusin', 'nisuin', 'divorce', 'yibum', 'chalitzah', 'unmarried-relations'];
 
 export function ControlPanel() {
   const resolvedState = useCurrentResolvedState();
@@ -24,7 +24,7 @@ export function ControlPanel() {
   const removeSlice = useGraphStore((state) => state.removeSlice);
   const updateMetadata = useGraphStore((state) => state.updateMetadata);
 
-  const [newEdgeType, setNewEdgeType] = useState<RelationshipType>('marriage');
+  const [newEdgeType, setNewEdgeType] = useState<RelationshipType>('nisuin');
   const [newChildName, setNewChildName] = useState('');
   const [newChildGender, setNewChildGender] = useState<'male' | 'female'>('male');
 
@@ -66,7 +66,7 @@ export function ControlPanel() {
   };
 
   const canAddChild = selectedEdge &&
-    (selectedEdge.type === 'marriage' || selectedEdge.type === 'unmarried-relations');
+    (selectedEdge.type === 'erusin' || selectedEdge.type === 'nisuin' || selectedEdge.type === 'unmarried-relations');
 
   return (
     <div className="control-panel">
