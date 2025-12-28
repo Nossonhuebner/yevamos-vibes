@@ -105,6 +105,12 @@ export const translations = {
     copyLink: 'Copy Link',
     linkCopied: 'Link copied to clipboard!',
     loadedFromLink: 'Graph loaded from shared link',
+
+    // Mobile Nav
+    menu: 'Menu',
+    graphTitle: 'Graph Title',
+    halachaMode: 'Halacha Mode',
+    fileOperations: 'File Operations',
   },
 
   he: {
@@ -211,6 +217,12 @@ export const translations = {
     copyLink: 'העתק קישור',
     linkCopied: 'הקישור הועתק!',
     loadedFromLink: 'הגרף נטען מקישור משותף',
+
+    // Mobile Nav
+    menu: 'תפריט',
+    graphTitle: 'שם הגרף',
+    halachaMode: 'מצב הלכה',
+    fileOperations: 'פעולות קובץ',
   },
 } as const;
 

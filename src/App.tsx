@@ -10,6 +10,7 @@ import { AddRelationModal } from './components/AddRelationModal';
 import { EditDescriptionModal } from './components/EditDescriptionModal';
 import { StatusPanel } from './components/StatusPanel';
 import { HalachaInstructions } from './components/HalachaToggle';
+import { MobileNav } from './components/MobileNav';
 import { useGraphStore, useCurrentResolvedState } from './store/graphStore';
 import { loadFromLocalStorage, saveToLocalStorage, getGraphFromUrl, clearUrlData } from './utils/persistence';
 import { preloadEmojiTextures } from './utils/emojiTextures';
@@ -446,15 +447,19 @@ function App() {
       <StatusPanel />
       <HalachaInstructions />
 
-      {/* GitHub Link */}
+      {/* Mobile Navigation */}
+      <MobileNav />
+
+      {/* GitHub Link - positioned above Legend on left side */}
       <a
         href="https://github.com/Nossonhuebner/yevamos-vibes"
         target="_blank"
         rel="noopener noreferrer"
+        className="github-link"
         style={{
           position: 'fixed',
-          bottom: '16px',
-          right: '16px',
+          bottom: '220px',
+          left: '24px',
           color: '#64748b',
           opacity: 0.7,
           transition: 'opacity 0.2s, color 0.2s',
