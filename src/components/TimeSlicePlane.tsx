@@ -32,9 +32,10 @@ export function TimeSlicePlane({
   const viewMode = useGraphStore((state) => state.viewMode);
   const isDraggingNode = useGraphStore((state) => state.isDraggingNode);
 
-  // State for tab and label hover
+  // State for tab, label, and plane hover
   const [tabHovered, setTabHovered] = useState(false);
   const [labelHovered, setLabelHovered] = useState(false);
+  const [planeHovered, setPlaneHovered] = useState(false);
 
   // Calculate opacity - non-current slices are much dimmer
   const planeOpacity = useMemo(() => {
@@ -42,17 +43,13 @@ export function TimeSlicePlane({
     return 0.02; // Much dimmer for non-current slices
   }, [isCurrentSlice]);
 
-  // Border color also adjusts in Focus mode
+  // Border color - always show a slight outline for non-current slices
   const borderColor = useMemo(() => {
     if (isCurrentSlice) return '#22d3ee';
-    if (viewMode === 'focus') {
-      const distance = Math.abs(sliceIndex - currentSliceIndex);
-      // Fade border color based on distance
-      const alpha = Math.max(0.2, 1 - distance * 0.2);
-      return `rgba(42, 47, 58, ${alpha})`;
-    }
-    return '#2a2f3a';
-  }, [viewMode, isCurrentSlice, sliceIndex, currentSliceIndex]);
+    // Brighter on hover, dim otherwise
+    if (planeHovered) return 'rgba(148, 163, 184, 0.6)'; // Slate-400 at 60% opacity
+    return 'rgba(100, 116, 139, 0.25)'; // Slate-500 at 25% opacity
+  }, [isCurrentSlice, planeHovered]);
 
   // Create border points for the vertical plane (XY plane) - doubled size
   const borderPoints = useMemo(() => {
@@ -72,11 +69,14 @@ export function TimeSlicePlane({
   const edges = getEdgesArray(resolvedState);
 
   const handlePlaneClick = () => {
-    // Only allow clicks on the current slice
-    if (!isCurrentSlice) return;
-
     // Don't change slice if we're currently dragging a node
     if (isDraggingNode) return;
+
+    // If clicking on a non-current slice, navigate to it
+    if (!isCurrentSlice) {
+      setCurrentSlice(sliceIndex);
+      return;
+    }
 
     // Clear any node selection when clicking on the slice background
     clearNodeSelection();
@@ -110,12 +110,24 @@ export function TimeSlicePlane({
         position={[0, 0, 0]}
         onClick={handlePlaneClick}
         onContextMenu={handleContextMenu}
+        onPointerOver={() => {
+          if (!isCurrentSlice) {
+            setPlaneHovered(true);
+            document.body.style.cursor = 'pointer';
+          }
+        }}
+        onPointerOut={() => {
+          setPlaneHovered(false);
+          if (!isCurrentSlice) {
+            document.body.style.cursor = 'auto';
+          }
+        }}
       >
         <planeGeometry args={[32, 32]} />
         <meshStandardMaterial
-          color={isCurrentSlice ? '#22d3ee' : '#151922'}
+          color={isCurrentSlice ? '#22d3ee' : (planeHovered ? '#334155' : '#151922')}
           transparent
-          opacity={planeOpacity}
+          opacity={isCurrentSlice ? planeOpacity : (planeHovered ? 0.08 : planeOpacity)}
           side={THREE.DoubleSide}
         />
       </mesh>
