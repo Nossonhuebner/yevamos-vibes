@@ -120,7 +120,7 @@ export function HalachaToggle() {
 }
 
 /**
- * Instruction overlay shown when halacha mode is active but no person is locked.
+ * Instruction banner shown when halacha mode is active but no person is locked.
  */
 export function HalachaInstructions() {
   const enabled = useHalachaStore((state) => state.enabled);
@@ -133,45 +133,43 @@ export function HalachaInstructions() {
     <div
       style={{
         position: 'fixed',
-        top: '50%',
+        top: '60px',
         left: '50%',
-        transform: 'translate(-50%, -50%)',
-        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+        transform: 'translateX(-50%)',
+        backgroundColor: 'rgba(15, 23, 42, 0.95)',
         border: '1px solid #a855f7',
-        borderRadius: '12px',
-        padding: '24px 32px',
-        textAlign: 'center',
+        borderRadius: '8px',
+        padding: '10px 20px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
         zIndex: 50,
         pointerEvents: 'none',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
       }}
     >
-      <div
-        style={{
-          fontSize: '24px',
-          marginBottom: '12px',
-        }}
-      >
-        📜
-      </div>
-      <div
-        style={{
-          color: '#f8fafc',
-          fontSize: '14px',
-          fontWeight: 500,
-          marginBottom: '8px',
-        }}
-      >
-        {displayLanguage === 'he' ? 'מצב הלכה פעיל' : 'Halacha Mode Active'}
-      </div>
-      <div
-        style={{
-          color: '#94a3b8',
-          fontSize: '12px',
-        }}
-      >
-        {displayLanguage === 'he'
-          ? 'לחץ על אדם לצפייה במעמדו ההלכתי'
-          : 'Click a person to view their halachic status'}
+      <span style={{ fontSize: '18px' }}>📜</span>
+      <div>
+        <span
+          style={{
+            color: '#c4b5fd',
+            fontSize: '13px',
+            fontWeight: 500,
+          }}
+        >
+          {displayLanguage === 'he' ? 'מצב הלכה פעיל' : 'Halacha Mode Active'}
+        </span>
+        <span style={{ color: '#64748b', margin: '0 8px' }}>—</span>
+        <span
+          style={{
+            color: '#94a3b8',
+            fontSize: '12px',
+          }}
+        >
+          {displayLanguage === 'he'
+            ? 'לחץ על אדם לצפייה במעמדו ההלכתי'
+            : 'Click a person to view their halachic status'}
+        </span>
       </div>
     </div>
   );
