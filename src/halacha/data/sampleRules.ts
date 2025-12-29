@@ -218,7 +218,7 @@ export const SAMPLE_RULES: HalachicRule[] = [
     pattern: {
       type: 'path',
       pathPattern: 'parent.spouse',
-      throughGender: 'male', // Through father
+      pathGenders: ['male', 'female'], // Father → his wife
     },
     produces: {
       categoryId: 'ervah-doraita',
@@ -227,6 +227,138 @@ export const SAMPLE_RULES: HalachicRule[] = [
     dependsOnMachlokos: [],
     appliesWhen: [],
     sources: ['Vayikra 18:8'],
+  },
+
+  // Father's Sister (דודתו מן האב)
+  {
+    id: 'ervah-fathers-sister',
+    name: { en: "Father's Sister", he: 'דודתו מן האב' },
+    description: {
+      en: "Father's sister (paternal aunt) is forbidden",
+      he: 'אחות אביו אסורה עליו',
+    },
+    pattern: {
+      type: 'path',
+      pathPattern: 'parent.sibling',
+      pathGenders: ['male', 'female'], // Father → his sister
+    },
+    produces: {
+      categoryId: 'ervah-doraita',
+      statusName: { en: "Father's Sister", he: 'דודה מן האב' },
+    },
+    dependsOnMachlokos: [],
+    appliesWhen: [],
+    sources: ['Vayikra 18:12'],
+  },
+
+  // Mother's Sister (אחות אם)
+  {
+    id: 'ervah-mothers-sister',
+    name: { en: "Mother's Sister", he: 'אחות אם' },
+    description: {
+      en: "Mother's sister (maternal aunt) is forbidden",
+      he: 'אחות אמו אסורה עליו',
+    },
+    pattern: {
+      type: 'path',
+      pathPattern: 'parent.sibling',
+      pathGenders: ['female', 'female'], // Mother → her sister
+    },
+    produces: {
+      categoryId: 'ervah-doraita',
+      statusName: { en: "Mother's Sister", he: 'דודה מן האם' },
+    },
+    dependsOnMachlokos: [],
+    appliesWhen: [],
+    sources: ['Vayikra 18:13'],
+  },
+
+  // Uncle's Wife / Father's Brother's Wife (אשת אחי האב)
+  {
+    id: 'ervah-uncles-wife',
+    name: { en: "Uncle's Wife", he: 'אשת דודו' },
+    description: {
+      en: "Father's brother's wife (uncle's wife) is forbidden",
+      he: 'אשת אחי אביו אסורה עליו',
+    },
+    pattern: {
+      type: 'path',
+      pathPattern: 'parent.sibling.spouse',
+      pathGenders: ['male', 'male', 'female'], // Father → his brother → his wife
+    },
+    produces: {
+      categoryId: 'ervah-doraita',
+      statusName: { en: "Uncle's Wife", he: 'אשת דוד' },
+    },
+    dependsOnMachlokos: [],
+    appliesWhen: [],
+    sources: ['Vayikra 18:14'],
+  },
+
+  // Daughter-in-law (כלתו)
+  {
+    id: 'ervah-daughter-in-law',
+    name: { en: 'Daughter-in-law', he: 'כלתו' },
+    description: {
+      en: "Son's wife (daughter-in-law) is forbidden",
+      he: 'אשת בנו אסורה עליו',
+    },
+    pattern: {
+      type: 'path',
+      pathPattern: 'child.spouse',
+      pathGenders: ['male', 'female'], // Son → his wife
+    },
+    produces: {
+      categoryId: 'ervah-doraita',
+      statusName: { en: 'Daughter-in-law', he: 'כלה' },
+    },
+    dependsOnMachlokos: [],
+    appliesWhen: [],
+    sources: ['Vayikra 18:15'],
+  },
+
+  // Stepdaughter / Wife's Daughter (בת אשתו)
+  {
+    id: 'ervah-stepdaughter',
+    name: { en: 'Stepdaughter', he: 'בת אשתו' },
+    description: {
+      en: "Wife's daughter (stepdaughter) is forbidden",
+      he: 'בת אשתו אסורה עליו',
+    },
+    pattern: {
+      type: 'path',
+      pathPattern: 'spouse.child',
+      pathGenders: ['female', 'female'], // Wife → her daughter
+    },
+    produces: {
+      categoryId: 'ervah-doraita',
+      statusName: { en: 'Stepdaughter', he: 'בת אשה' },
+    },
+    dependsOnMachlokos: [],
+    appliesWhen: [],
+    sources: ['Vayikra 18:17'],
+  },
+
+  // Wife's Granddaughter (בת בנה / בת בתה)
+  {
+    id: 'ervah-wifes-granddaughter',
+    name: { en: "Wife's Granddaughter", he: 'בת בנה / בת בתה' },
+    description: {
+      en: "Wife's granddaughter is forbidden",
+      he: 'בת בנה או בת בתה של אשתו אסורה עליו',
+    },
+    pattern: {
+      type: 'path',
+      pathPattern: 'spouse.child.child',
+      pathGenders: ['female', null, 'female'], // Wife → any child → daughter
+    },
+    produces: {
+      categoryId: 'ervah-doraita',
+      statusName: { en: "Wife's Granddaughter", he: 'נכדת אשה' },
+    },
+    dependsOnMachlokos: [],
+    appliesWhen: [],
+    sources: ['Vayikra 18:17'],
   },
 
   // ─────────────────────────────────────────────────────────────────────────

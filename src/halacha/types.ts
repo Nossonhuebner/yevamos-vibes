@@ -148,8 +148,17 @@ export interface RelationshipPattern {
 
   /**
    * Optional: Only match if path goes through specific gender.
+   * Applies to ALL steps in the path (legacy behavior).
    */
   throughGender?: 'male' | 'female';
+
+  /**
+   * Optional: Gender filter for each step in the path.
+   * Array length should match pathPattern steps.
+   * Use null for "any gender" at that step.
+   * Takes precedence over throughGender if both are specified.
+   */
+  pathGenders?: (('male' | 'female') | null)[];
 
   /**
    * Optional: Negate the result of this pattern.

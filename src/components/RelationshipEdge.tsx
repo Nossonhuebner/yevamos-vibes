@@ -64,7 +64,7 @@ export function RelationshipEdge({
     };
   }, [isHovered, isSelected]);
   const isCurrentSlice = sliceIndex === currentSliceIndex;
-  const style = RELATIONSHIP_STYLES[edge.type];
+  const style = RELATIONSHIP_STYLES[edge.type] ?? { color: '#94a3b8', lineStyle: 'solid' as const, lineWidth: 2 };
   const canInteract = isCurrentSlice;
 
   // Calculate edge points on vertical XY plane

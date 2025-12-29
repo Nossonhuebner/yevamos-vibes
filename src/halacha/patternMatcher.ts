@@ -135,8 +135,15 @@ export class PatternMatcher {
     // Parse path pattern (e.g., "spouse.sibling" = B is sibling of A's spouse)
     const steps = pattern.pathPattern.split('.');
 
-    // Find the path
-    const path = this.findPathByPattern(personA, personB, steps, sliceIndex, pattern.throughGender);
+    // Find the path - use pathGenders if specified, otherwise fall back to throughGender
+    const path = this.findPathByPattern(
+      personA,
+      personB,
+      steps,
+      sliceIndex,
+      pattern.pathGenders,
+      pattern.throughGender
+    );
 
     if (path) {
       return {
@@ -151,12 +158,15 @@ export class PatternMatcher {
 
   /**
    * Find a path matching the step pattern.
+   * @param pathGenders - Per-step gender filters (takes precedence over throughGender)
+   * @param throughGender - Legacy: applies same gender filter to ALL steps
    */
   private findPathByPattern(
     start: string,
     end: string,
     steps: string[],
     sliceIndex: number,
+    pathGenders?: (('male' | 'female') | null)[],
     throughGender?: 'male' | 'female'
   ): RelationshipPath | null {
     if (steps.length === 0) {
@@ -168,11 +178,17 @@ export class PatternMatcher {
     // Get candidates for first step
     const candidates = this.getStepCandidates(start, steps[0], sliceIndex);
 
+    // Determine gender filter for this step
+    // pathGenders takes precedence if specified
+    const stepGender = pathGenders && pathGenders.length > 0
+      ? pathGenders[0]
+      : throughGender;
+
     // Filter by gender if required
-    const filtered = throughGender
+    const filtered = stepGender
       ? candidates.filter((c) => {
           const person = this.graph.nodes[c.personId];
-          return person && person.gender === throughGender;
+          return person && person.gender === stepGender;
         })
       : candidates;
 
@@ -183,6 +199,7 @@ export class PatternMatcher {
         end,
         steps.slice(1),
         sliceIndex,
+        pathGenders ? pathGenders.slice(1) : undefined,
         throughGender
       );
 
