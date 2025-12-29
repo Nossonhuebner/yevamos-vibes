@@ -67,26 +67,27 @@ export function TimeSlicePlane({
   const edges = getEdgesArray(resolvedState);
 
   const handlePlaneClick = (e: ThreeEvent<MouseEvent>) => {
-    // Don't change slice if we're currently dragging a node
     if (isDraggingNode) return;
 
-    // Always stop propagation to prevent click-through
-    e.stopPropagation();
-
-    // If clicking on the current slice, just clear selection
+    // Current slice always handles its clicks
     if (isCurrentSlice) {
+      e.stopPropagation();
       clearNodeSelection();
       return;
     }
 
-    // For non-current slices: only handle click if this mesh is the
-    // first/closest intersection (not clicking through another slice)
-    if (e.intersections.length > 0 && e.intersections[0].object !== e.object) {
-      // This slice is behind another object - ignore the click
+    // For non-current slices: check if the CURRENT slice is also intersected
+    const currentSliceIntersected = e.intersections.some(
+      (intersection) => intersection.object.userData?.isCurrentSlice === true
+    );
+
+    if (currentSliceIntersected) {
+      // Current slice is also hit - don't handle, let it pass through
       return;
     }
 
-    // Navigate to the clicked slice
+    // Current slice NOT intersected - this is an exposed area, navigate
+    e.stopPropagation();
     setCurrentSlice(sliceIndex);
   };
 
@@ -116,13 +117,20 @@ export function TimeSlicePlane({
       {/* Slice plane (semi-transparent) - vertical XY plane - doubled size */}
       <mesh
         position={[0, 0, 0]}
+        userData={{ isSlicePlane: true, sliceIndex, isCurrentSlice }}
         onClick={handlePlaneClick}
         onContextMenu={handleContextMenu}
-        onPointerOver={() => {
-          if (!isCurrentSlice) {
-            setPlaneHovered(true);
-            document.body.style.cursor = 'pointer';
-          }
+        onPointerOver={(e) => {
+          if (isCurrentSlice) return; // Current slice doesn't need hover styling
+
+          // Only show hover if current slice is NOT intersected
+          const currentSliceIntersected = e.intersections.some(
+            (intersection) => intersection.object.userData?.isCurrentSlice === true
+          );
+          if (currentSliceIntersected) return;
+
+          setPlaneHovered(true);
+          document.body.style.cursor = 'pointer';
         }}
         onPointerOut={() => {
           setPlaneHovered(false);
