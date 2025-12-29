@@ -66,18 +66,28 @@ export function TimeSlicePlane({
   const nodes = getNodesArray(resolvedState);
   const edges = getEdgesArray(resolvedState);
 
-  const handlePlaneClick = () => {
+  const handlePlaneClick = (e: ThreeEvent<MouseEvent>) => {
     // Don't change slice if we're currently dragging a node
     if (isDraggingNode) return;
 
-    // If clicking on a non-current slice, navigate to it
-    if (!isCurrentSlice) {
-      setCurrentSlice(sliceIndex);
+    // Always stop propagation to prevent click-through
+    e.stopPropagation();
+
+    // If clicking on the current slice, just clear selection
+    if (isCurrentSlice) {
+      clearNodeSelection();
       return;
     }
 
-    // Clear any node selection when clicking on the slice background
-    clearNodeSelection();
+    // For non-current slices: only handle click if this mesh is the
+    // first/closest intersection (not clicking through another slice)
+    if (e.intersections.length > 0 && e.intersections[0].object !== e.object) {
+      // This slice is behind another object - ignore the click
+      return;
+    }
+
+    // Navigate to the clicked slice
+    setCurrentSlice(sliceIndex);
   };
 
   const handleContextMenu = (e: ThreeEvent<MouseEvent>) => {
