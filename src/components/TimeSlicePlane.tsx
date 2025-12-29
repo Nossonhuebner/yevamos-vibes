@@ -49,16 +49,90 @@ export function TimeSlicePlane({
     return 'rgba(100, 116, 139, 0.25)'; // Slate-500 at 25% opacity
   }, [isCurrentSlice, planeHovered]);
 
-  // Create border points for the vertical plane (XY plane) - doubled size
+  // Create rounded rectangle shape for the plane
+  const roundedRectShape = useMemo(() => {
+    const size = 16;
+    const radius = 1.2; // Corner radius
+    const shape = new THREE.Shape();
+
+    // Start from bottom-left, going clockwise
+    shape.moveTo(-size + radius, -size);
+    shape.lineTo(size - radius, -size);
+    shape.quadraticCurveTo(size, -size, size, -size + radius);
+    shape.lineTo(size, size - radius);
+    shape.quadraticCurveTo(size, size, size - radius, size);
+    shape.lineTo(-size + radius, size);
+    shape.quadraticCurveTo(-size, size, -size, size - radius);
+    shape.lineTo(-size, -size + radius);
+    shape.quadraticCurveTo(-size, -size, -size + radius, -size);
+
+    return shape;
+  }, []);
+
+  // Create border points for the vertical plane (XY plane) - with rounded corners
   const borderPoints = useMemo(() => {
     const size = 16;
-    return [
-      new THREE.Vector3(-size, -size, 0),
-      new THREE.Vector3(size, -size, 0),
-      new THREE.Vector3(size, size, 0),
-      new THREE.Vector3(-size, size, 0),
-      new THREE.Vector3(-size, -size, 0),
-    ];
+    const radius = 1.2;
+    const segments = 8; // Segments per corner
+    const points: THREE.Vector3[] = [];
+
+    // Bottom edge (left to right)
+    points.push(new THREE.Vector3(-size + radius, -size, 0));
+    points.push(new THREE.Vector3(size - radius, -size, 0));
+
+    // Bottom-right corner
+    for (let i = 0; i <= segments; i++) {
+      const angle = Math.PI * 1.5 + (Math.PI / 2) * (i / segments);
+      points.push(new THREE.Vector3(
+        size - radius + Math.cos(angle) * radius,
+        -size + radius + Math.sin(angle) * radius,
+        0
+      ));
+    }
+
+    // Right edge (bottom to top)
+    points.push(new THREE.Vector3(size, size - radius, 0));
+
+    // Top-right corner
+    for (let i = 0; i <= segments; i++) {
+      const angle = 0 + (Math.PI / 2) * (i / segments);
+      points.push(new THREE.Vector3(
+        size - radius + Math.cos(angle) * radius,
+        size - radius + Math.sin(angle) * radius,
+        0
+      ));
+    }
+
+    // Top edge (right to left)
+    points.push(new THREE.Vector3(-size + radius, size, 0));
+
+    // Top-left corner
+    for (let i = 0; i <= segments; i++) {
+      const angle = Math.PI / 2 + (Math.PI / 2) * (i / segments);
+      points.push(new THREE.Vector3(
+        -size + radius + Math.cos(angle) * radius,
+        size - radius + Math.sin(angle) * radius,
+        0
+      ));
+    }
+
+    // Left edge (top to bottom)
+    points.push(new THREE.Vector3(-size, -size + radius, 0));
+
+    // Bottom-left corner
+    for (let i = 0; i <= segments; i++) {
+      const angle = Math.PI + (Math.PI / 2) * (i / segments);
+      points.push(new THREE.Vector3(
+        -size + radius + Math.cos(angle) * radius,
+        -size + radius + Math.sin(angle) * radius,
+        0
+      ));
+    }
+
+    // Close the loop
+    points.push(new THREE.Vector3(-size + radius, -size, 0));
+
+    return points;
   }, []);
 
   if (!resolvedState) return null;
@@ -114,7 +188,7 @@ export function TimeSlicePlane({
 
   return (
     <group position={[0, 0, zPosition]}>
-      {/* Slice plane (semi-transparent) - vertical XY plane - doubled size */}
+      {/* Slice plane (semi-transparent) - vertical XY plane with rounded corners */}
       <mesh
         position={[0, 0, 0]}
         userData={{ isSlicePlane: true, sliceIndex, isCurrentSlice }}
@@ -139,7 +213,7 @@ export function TimeSlicePlane({
           }
         }}
       >
-        <planeGeometry args={[32, 32]} />
+        <shapeGeometry args={[roundedRectShape]} />
         <meshStandardMaterial
           color={isCurrentSlice ? '#22d3ee' : (planeHovered ? '#334155' : '#151922')}
           transparent
