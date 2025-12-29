@@ -150,6 +150,12 @@ export interface RelationshipPattern {
    * Optional: Only match if path goes through specific gender.
    */
   throughGender?: 'male' | 'female';
+
+  /**
+   * Optional: Negate the result of this pattern.
+   * If true, the pattern matches when it would NOT normally match.
+   */
+  negate?: boolean;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

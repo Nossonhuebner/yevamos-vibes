@@ -162,16 +162,19 @@ export class ZikahTracker {
 
     if (hadLivingChildren) return; // No yibum needed
 
-    // Find brothers who were alive at time of death
+    // Find brothers who were alive at time of death AND had lifetime overlap with deceased
+    // (Yibum only applies if brothers' lifetimes overlapped - a brother born after
+    // the deceased died cannot perform yibum)
     const brothers = this.engine
       .getSiblings(deceasedId, deathEvent.sliceIndex)
       .filter((s) => s.gender === 'male');
 
-    const livingBrothers = brothers.filter((b) =>
-      this.engine.wasAliveWhen(b.id, deathEvent)
+    const eligibleBrothers = brothers.filter((b) =>
+      this.engine.wasAliveWhen(b.id, deathEvent) &&
+      this.engine.lifetimesOverlap(deceasedId, b.id)
     );
 
-    if (livingBrothers.length === 0) return; // No yevamim
+    if (eligibleBrothers.length === 0) return; // No valid yevamim
 
     // Create zikah record for each marriage
     for (const marriage of marriages) {
@@ -187,7 +190,7 @@ export class ZikahTracker {
         yevama: wifeId,
         deceasedHusband: deceasedId,
         marriageEdgeId: marriage.id,
-        yevamim: livingBrothers.map((b) => b.id),
+        yevamim: eligibleBrothers.map((b) => b.id),
         createdAt: deathEvent,
         createdAtSlice: deathEvent.sliceIndex,
         status: 'shomeres-yavam',

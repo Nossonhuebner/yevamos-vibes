@@ -45,25 +45,45 @@ export class PatternMatcher {
     pattern: RelationshipPattern,
     sliceIndex: number
   ): PatternMatchResult {
+    let result: PatternMatchResult;
+
     switch (pattern.type) {
       case 'direct':
-        return this.matchDirectPattern(personA, personB, pattern, sliceIndex);
+        result = this.matchDirectPattern(personA, personB, pattern, sliceIndex);
+        break;
 
       case 'path':
-        return this.matchPathPattern(personA, personB, pattern, sliceIndex);
+        result = this.matchPathPattern(personA, personB, pattern, sliceIndex);
+        break;
 
       case 'state':
-        return this.matchStatePattern(personA, personB, pattern, sliceIndex);
+        result = this.matchStatePattern(personA, personB, pattern, sliceIndex);
+        break;
 
       case 'temporal':
-        return this.matchTemporalPattern(personA, personB, pattern, sliceIndex);
+        result = this.matchTemporalPattern(personA, personB, pattern, sliceIndex);
+        break;
 
       case 'composite':
-        return this.matchCompositePattern(personA, personB, pattern, sliceIndex);
+        result = this.matchCompositePattern(personA, personB, pattern, sliceIndex);
+        break;
 
       default:
-        return { matches: false };
+        result = { matches: false };
     }
+
+    // Apply negate if specified
+    if (pattern.negate) {
+      result = {
+        ...result,
+        matches: !result.matches,
+        explanation: result.matches
+          ? `(negated) ${result.explanation || ''}`
+          : `(negated) ${result.explanation || 'Condition not met'}`,
+      };
+    }
+
+    return result;
   }
 
   // ─────────────────────────────────────────────────────────────────────────

@@ -107,6 +107,40 @@ export const SAMPLE_RULES: HalachicRule[] = [
     appliesWhen: [],
   },
 
+  // Married Woman (אשת איש) - Forbidden to all other men
+  {
+    id: 'ervah-aishes-ish',
+    name: { en: 'Married Woman', he: 'אשת איש' },
+    description: {
+      en: 'A married woman is forbidden to all other men',
+      he: 'אשת איש אסורה לכל אדם אחר',
+    },
+    pattern: {
+      type: 'composite',
+      compositeOp: 'and',
+      subPatterns: [
+        // B is currently married
+        {
+          type: 'state',
+          stateConditions: [{ person: 'B', condition: 'married' }],
+        },
+        // A is NOT B's spouse
+        {
+          type: 'direct',
+          directEdgeTypes: ['nisuin', 'erusin'],
+          negate: true,
+        },
+      ],
+    },
+    produces: {
+      categoryId: 'ervah-doraita',
+      statusName: { en: 'Married Woman', he: 'אשת איש' },
+    },
+    dependsOnMachlokos: [],
+    appliesWhen: [],
+    sources: ['Vayikra 18:20'],
+  },
+
   // Brother's Wife (אשת אח) - Forbidden except for yibum
   {
     id: 'ervah-brothers-wife',
