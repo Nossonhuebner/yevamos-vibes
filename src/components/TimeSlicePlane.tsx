@@ -27,9 +27,7 @@ export function TimeSlicePlane({
   const setCurrentSlice = useGraphStore((state) => state.setCurrentSlice);
   const openContextMenu = useGraphStore((state) => state.openContextMenu);
   const openEditDescription = useGraphStore((state) => state.openEditDescription);
-  const currentSliceIndex = useGraphStore((state) => state.currentSliceIndex);
   const clearNodeSelection = useGraphStore((state) => state.clearNodeSelection);
-  const viewMode = useGraphStore((state) => state.viewMode);
   const isDraggingNode = useGraphStore((state) => state.isDraggingNode);
 
   // State for tab, label, and plane hover
