@@ -84,6 +84,76 @@ export const SAMPLE_RULES: HalachicRule[] = [
   },
 
   // ─────────────────────────────────────────────────────────────────────────
+  // Reciprocal Direct Relationship Rules (from female perspective)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // Son (בנה) - reciprocal to Mother
+  {
+    id: 'ervah-son',
+    name: { en: 'Son', he: 'בנה' },
+    description: {
+      en: "One's son is forbidden",
+      he: 'בנה אסור עליה',
+    },
+    pattern: {
+      type: 'path',
+      pathPattern: 'child',
+      throughGender: 'male',
+    },
+    produces: {
+      categoryId: 'ervah-doraita',
+      statusName: { en: 'Son', he: 'בנה' },
+    },
+    dependsOnMachlokos: [],
+    appliesWhen: [],
+    sources: ['Vayikra 18:7'],
+  },
+
+  // Father (אביה) - reciprocal to Daughter
+  {
+    id: 'ervah-father',
+    name: { en: 'Father', he: 'אביה' },
+    description: {
+      en: "One's father is forbidden",
+      he: 'אביה אסור עליה',
+    },
+    pattern: {
+      type: 'path',
+      pathPattern: 'parent',
+      throughGender: 'male',
+    },
+    produces: {
+      categoryId: 'ervah-doraita',
+      statusName: { en: 'Father', he: 'אביה' },
+    },
+    dependsOnMachlokos: [],
+    appliesWhen: [],
+    sources: ['Vayikra 18:10'],
+  },
+
+  // Brother (אחיה) - reciprocal to Sister
+  {
+    id: 'ervah-brother',
+    name: { en: 'Brother', he: 'אחיה' },
+    description: {
+      en: "One's brother is forbidden",
+      he: 'אחיה אסור עליה',
+    },
+    pattern: {
+      type: 'path',
+      pathPattern: 'sibling',
+      throughGender: 'male',
+    },
+    produces: {
+      categoryId: 'ervah-doraita',
+      statusName: { en: 'Brother', he: 'אחיה' },
+    },
+    dependsOnMachlokos: [],
+    appliesWhen: [],
+    sources: ['Vayikra 18:9'],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
   // Path-Based Rules (Derived Relationships)
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -142,6 +212,8 @@ export const SAMPLE_RULES: HalachicRule[] = [
   },
 
   // Brother's Wife (אשת אח) - Forbidden except for yibum
+  // This is a PERMANENT ervah - persists even after the brother dies.
+  // When yibum applies (active zikah), the ervah is overridden for that purpose.
   {
     id: 'ervah-brothers-wife',
     name: { en: "Brother's Wife", he: 'אשת אח' },
@@ -152,7 +224,8 @@ export const SAMPLE_RULES: HalachicRule[] = [
     pattern: {
       type: 'path',
       pathPattern: 'sibling.spouse',
-      throughGender: 'male', // Through male sibling (brother)
+      pathGenders: ['male', 'female'], // Brother (male) → his wife (female)
+      historicalSpouse: true, // Persists even after brother dies
     },
     produces: {
       categoryId: 'ervah-doraita',
@@ -207,7 +280,7 @@ export const SAMPLE_RULES: HalachicRule[] = [
     sources: ['Vayikra 18:17'],
   },
 
-  // Father's Wife (אשת אב)
+  // Father's Wife (אשת אב) - PERMANENT ervah
   {
     id: 'ervah-fathers-wife',
     name: { en: "Father's Wife", he: 'אשת אב' },
@@ -219,6 +292,7 @@ export const SAMPLE_RULES: HalachicRule[] = [
       type: 'path',
       pathPattern: 'parent.spouse',
       pathGenders: ['male', 'female'], // Father → his wife
+      historicalSpouse: true, // Persists even after father dies
     },
     produces: {
       categoryId: 'ervah-doraita',
@@ -273,7 +347,7 @@ export const SAMPLE_RULES: HalachicRule[] = [
     sources: ['Vayikra 18:13'],
   },
 
-  // Uncle's Wife / Father's Brother's Wife (אשת אחי האב)
+  // Uncle's Wife / Father's Brother's Wife (אשת אחי האב) - PERMANENT ervah
   {
     id: 'ervah-uncles-wife',
     name: { en: "Uncle's Wife", he: 'אשת דודו' },
@@ -285,6 +359,7 @@ export const SAMPLE_RULES: HalachicRule[] = [
       type: 'path',
       pathPattern: 'parent.sibling.spouse',
       pathGenders: ['male', 'male', 'female'], // Father → his brother → his wife
+      historicalSpouse: true, // Persists even after uncle dies
     },
     produces: {
       categoryId: 'ervah-doraita',
@@ -295,7 +370,7 @@ export const SAMPLE_RULES: HalachicRule[] = [
     sources: ['Vayikra 18:14'],
   },
 
-  // Daughter-in-law (כלתו)
+  // Daughter-in-law (כלתו) - PERMANENT ervah
   {
     id: 'ervah-daughter-in-law',
     name: { en: 'Daughter-in-law', he: 'כלתו' },
@@ -307,6 +382,7 @@ export const SAMPLE_RULES: HalachicRule[] = [
       type: 'path',
       pathPattern: 'child.spouse',
       pathGenders: ['male', 'female'], // Son → his wife
+      historicalSpouse: true, // Persists even after son dies
     },
     produces: {
       categoryId: 'ervah-doraita',
@@ -426,6 +502,162 @@ export const SAMPLE_RULES: HalachicRule[] = [
     },
     dependsOnMachlokos: [],
     appliesWhen: [],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Reciprocal Path-Based Rules (from female perspective)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // Grandson (נכד) - reciprocal to Grandmother (shniyah)
+  {
+    id: 'shniyah-grandson',
+    name: { en: 'Grandson', he: 'נכדה' },
+    description: {
+      en: 'Grandson is a shniyah (rabbinic)',
+      he: 'בן הבן או בן הבת - שניות לעריות',
+    },
+    pattern: {
+      type: 'path',
+      pathPattern: 'child.child',
+      throughGender: 'male',
+    },
+    produces: {
+      categoryId: 'shniyah',
+      statusName: { en: 'Grandson', he: 'נכד' },
+    },
+    dependsOnMachlokos: [],
+    appliesWhen: [],
+  },
+
+  // Grandfather (סבה) - reciprocal to Granddaughter (shniyah)
+  {
+    id: 'shniyah-grandfather',
+    name: { en: 'Grandfather', he: 'סבה' },
+    description: {
+      en: 'Grandfather is a shniyah (rabbinic)',
+      he: 'אב אב או אבי אם - שניות לעריות',
+    },
+    pattern: {
+      type: 'path',
+      pathPattern: 'parent.parent',
+      throughGender: 'male',
+    },
+    produces: {
+      categoryId: 'shniyah',
+      statusName: { en: 'Grandfather', he: 'סב' },
+    },
+    dependsOnMachlokos: [],
+    appliesWhen: [],
+  },
+
+  // Son-in-law (חתנה) - reciprocal to Mother-in-law
+  {
+    id: 'ervah-son-in-law',
+    name: { en: 'Son-in-law', he: 'חתנה' },
+    description: {
+      en: "Daughter's husband (son-in-law) is forbidden",
+      he: 'בעל בתה אסור עליה',
+    },
+    pattern: {
+      type: 'path',
+      pathPattern: 'child.spouse',
+      pathGenders: ['female', 'male'], // Daughter → her husband
+    },
+    produces: {
+      categoryId: 'ervah-doraita',
+      statusName: { en: 'Son-in-law', he: 'חתן' },
+    },
+    dependsOnMachlokos: [],
+    appliesWhen: [],
+    sources: ['Vayikra 18:17'],
+  },
+
+  // Father-in-law (חמיה) - reciprocal to Daughter-in-law
+  {
+    id: 'ervah-father-in-law',
+    name: { en: 'Father-in-law', he: 'חמיה' },
+    description: {
+      en: "Husband's father (father-in-law) is forbidden",
+      he: 'אבי בעלה אסור עליה',
+    },
+    pattern: {
+      type: 'path',
+      pathPattern: 'spouse.parent',
+      throughGender: 'male',
+    },
+    produces: {
+      categoryId: 'ervah-doraita',
+      statusName: { en: 'Father-in-law', he: 'חם' },
+    },
+    dependsOnMachlokos: [],
+    appliesWhen: [],
+    sources: ['Vayikra 18:15'],
+  },
+
+  // Stepson (בן בעלה) - reciprocal to Father's Wife
+  {
+    id: 'ervah-stepson',
+    name: { en: 'Stepson', he: 'בן בעלה' },
+    description: {
+      en: "Husband's son (stepson) is forbidden",
+      he: 'בן בעלה אסור עליה',
+    },
+    pattern: {
+      type: 'path',
+      pathPattern: 'spouse.child',
+      pathGenders: ['male', 'male'], // Husband → his son
+    },
+    produces: {
+      categoryId: 'ervah-doraita',
+      statusName: { en: 'Stepson', he: 'בן בעל' },
+    },
+    dependsOnMachlokos: [],
+    appliesWhen: [],
+    sources: ['Vayikra 18:8'],
+  },
+
+  // Stepfather (בעל אמה) - reciprocal to Stepdaughter
+  {
+    id: 'ervah-stepfather',
+    name: { en: 'Stepfather', he: 'בעל אמה' },
+    description: {
+      en: "Mother's husband (stepfather) is forbidden",
+      he: 'בעל אמה אסור עליה',
+    },
+    pattern: {
+      type: 'path',
+      pathPattern: 'parent.spouse',
+      pathGenders: ['female', 'male'], // Mother → her husband
+    },
+    produces: {
+      categoryId: 'ervah-doraita',
+      statusName: { en: 'Stepfather', he: 'בעל אם' },
+    },
+    dependsOnMachlokos: [],
+    appliesWhen: [],
+    sources: ['Vayikra 18:17'],
+  },
+
+  // Husband's Grandson (בן בנה / בן בתה של בעלה) - reciprocal to Wife's Granddaughter
+  {
+    id: 'ervah-husbands-grandson',
+    name: { en: "Husband's Grandson", he: 'נכד בעלה' },
+    description: {
+      en: "Husband's grandson is forbidden",
+      he: 'בן בנו או בן בתו של בעלה אסור עליה',
+    },
+    pattern: {
+      type: 'path',
+      pathPattern: 'spouse.child.child',
+      pathGenders: ['male', null, 'male'], // Husband → any child → son
+    },
+    produces: {
+      categoryId: 'ervah-doraita',
+      statusName: { en: "Husband's Grandson", he: 'נכד בעל' },
+    },
+    dependsOnMachlokos: [],
+    appliesWhen: [],
+    sources: ['Vayikra 18:17'],
   },
 ];
 

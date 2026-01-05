@@ -142,7 +142,8 @@ export class PatternMatcher {
       steps,
       sliceIndex,
       pattern.pathGenders,
-      pattern.throughGender
+      pattern.throughGender,
+      pattern.historicalSpouse
     );
 
     if (path) {
@@ -160,6 +161,7 @@ export class PatternMatcher {
    * Find a path matching the step pattern.
    * @param pathGenders - Per-step gender filters (takes precedence over throughGender)
    * @param throughGender - Legacy: applies same gender filter to ALL steps
+   * @param historicalSpouse - Use historical spouse lookups for permanent arayos
    */
   private findPathByPattern(
     start: string,
@@ -167,7 +169,8 @@ export class PatternMatcher {
     steps: string[],
     sliceIndex: number,
     pathGenders?: (('male' | 'female') | null)[],
-    throughGender?: 'male' | 'female'
+    throughGender?: 'male' | 'female',
+    historicalSpouse?: boolean
   ): RelationshipPath | null {
     if (steps.length === 0) {
       return start === end
@@ -176,7 +179,7 @@ export class PatternMatcher {
     }
 
     // Get candidates for first step
-    const candidates = this.getStepCandidates(start, steps[0], sliceIndex);
+    const candidates = this.getStepCandidates(start, steps[0], sliceIndex, historicalSpouse);
 
     // Determine gender filter for this step
     // pathGenders takes precedence if specified
@@ -200,7 +203,8 @@ export class PatternMatcher {
         steps.slice(1),
         sliceIndex,
         pathGenders ? pathGenders.slice(1) : undefined,
-        throughGender
+        throughGender,
+        historicalSpouse
       );
 
       if (remainingPath) {
@@ -224,11 +228,13 @@ export class PatternMatcher {
 
   /**
    * Get candidates for a single relationship step.
+   * @param historicalSpouse - Use historical spouse lookups (includes dead spouses)
    */
   private getStepCandidates(
     personId: string,
     step: string,
-    sliceIndex: number
+    sliceIndex: number,
+    historicalSpouse?: boolean
   ): Array<{ personId: string; relationship: 'parent' | 'child' | 'sibling' | 'spouse' | 'yavam' | 'yevama'; edgeId?: string }> {
     const candidates: Array<{
       personId: string;
@@ -238,7 +244,11 @@ export class PatternMatcher {
 
     switch (step) {
       case 'spouse':
-        for (const spouse of this.engine.getSpouses(personId, sliceIndex)) {
+        // Use historical spouses for permanent arayos (includes dead spouses)
+        const spouses = historicalSpouse
+          ? this.engine.getHistoricalSpouses(personId, sliceIndex)
+          : this.engine.getSpouses(personId, sliceIndex);
+        for (const spouse of spouses) {
           candidates.push({ personId: spouse.id, relationship: 'spouse' });
         }
         break;

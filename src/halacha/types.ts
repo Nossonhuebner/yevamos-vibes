@@ -165,6 +165,14 @@ export interface RelationshipPattern {
    * If true, the pattern matches when it would NOT normally match.
    */
   negate?: boolean;
+
+  /**
+   * Optional: Use historical spouse relationships instead of current.
+   * When true, spouse lookups include marriages even after the spouse dies.
+   * Used for permanent arayos like Brother's Wife (אשת אח), Son's Wife (כלה),
+   * and Father's Wife (אשת אב) which persist after the intermediary dies.
+   */
+  historicalSpouse?: boolean;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

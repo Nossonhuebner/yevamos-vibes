@@ -175,8 +175,49 @@ export class GraphQueryEngine {
   /**
    * Get spouses of a person at a given slice.
    * Spouse relationships: erusin, nisuin, yibum (not divorce, chalitzah).
+   * Returns empty if:
+   * - The person is dead (marriage ends at death)
+   * - The spouse is dead (widow/widower is not "married")
    */
   getSpouses(personId: string, sliceIndex: number): Person[] {
+    const state = this.getStateAtSlice(sliceIndex);
+    if (!state) return [];
+
+    // A dead person has no spouses - the marriage ended at death
+    if (!this.isAlive(personId, sliceIndex)) return [];
+
+    const spouseTypes: RelationshipType[] = ['erusin', 'nisuin', 'yibum'];
+    const spouses: Person[] = [];
+
+    for (const edge of state.edges.values()) {
+      if (spouseTypes.includes(edge.type)) {
+        if (edge.sourceId === personId) {
+          const spouse = state.nodes.get(edge.targetId);
+          // Only include LIVING spouses - a widow is not "married"
+          if (spouse && this.isAlive(spouse.id, sliceIndex)) {
+            spouses.push(spouse);
+          }
+        } else if (edge.targetId === personId) {
+          const spouse = state.nodes.get(edge.sourceId);
+          // Only include LIVING spouses - a widower is not "married"
+          if (spouse && this.isAlive(spouse.id, sliceIndex)) {
+            spouses.push(spouse);
+          }
+        }
+      }
+    }
+    return spouses;
+  }
+
+  /**
+   * Get historical spouses - anyone who was ever married to this person,
+   * regardless of whether the person or spouse is now dead.
+   * Used for permanent arayos like Brother's Wife (אשת אח) which persist
+   * even after the intermediary dies.
+   *
+   * Note: Only returns spouses whose marriage existed by the given slice.
+   */
+  getHistoricalSpouses(personId: string, sliceIndex: number): Person[] {
     const state = this.getStateAtSlice(sliceIndex);
     if (!state) return [];
 

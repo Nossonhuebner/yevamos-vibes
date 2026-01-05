@@ -42,6 +42,46 @@ export class StatusEngine {
     this.engine = new GraphQueryEngine(graph);
     this.patternMatcher = new PatternMatcher(graph);
     this.zikahTracker = new ZikahTracker(graph);
+
+    // Set up ervah checker for ZikahTracker to filter out ervah brothers
+    this.zikahTracker.setErvahChecker((personA, personB, sliceIndex) => {
+      return this.isErvahRelationship(personA, personB, sliceIndex);
+    });
+  }
+
+  /**
+   * Check if there is an ervah relationship between two people.
+   * Used by ZikahTracker to filter out brothers who are arayos to the yevama.
+   */
+  private isErvahRelationship(
+    personA: string,
+    personB: string,
+    sliceIndex: number
+  ): boolean {
+    // Check each rule for ervah patterns
+    for (const rule of this.registry.rules) {
+      // Only check Torah-level and rabbinic arayos
+      if (
+        rule.produces.categoryId !== 'ervah-doraita' &&
+        rule.produces.categoryId !== 'shniyah'
+      ) {
+        continue;
+      }
+
+      // Match the pattern
+      const matchResult = this.patternMatcher.matchPattern(
+        personA,
+        personB,
+        rule.pattern,
+        sliceIndex
+      );
+
+      if (matchResult.matches) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /**
@@ -439,9 +479,30 @@ export class StatusEngine {
       'mamzer',
     ];
 
-    return !status.allStatuses.some((s) =>
+    const hasProhibition = status.allStatuses.some((s) =>
       prohibitiveCategories.includes(s.category.id)
     );
+
+    if (!hasProhibition) {
+      return true;
+    }
+
+    // Special case: Active zikah overrides Brother's Wife ervah for yibum
+    // Check if the ONLY ervah is Brother's Wife AND there's active zikah
+    const zikahInfo = this.getZikahInfoBetween(personA, personB, sliceIndex);
+    if (zikahInfo?.isZakuk) {
+      // Check if all prohibitions are Brother's Wife (which is overridden by yibum)
+      const onlyBrothersWife = status.allStatuses
+        .filter((s) => prohibitiveCategories.includes(s.category.id))
+        .every((s) => s.ruleId === 'ervah-brothers-wife');
+
+      if (onlyBrothersWife) {
+        // Yibum is permitted - zikah overrides the Brother's Wife ervah
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /**
