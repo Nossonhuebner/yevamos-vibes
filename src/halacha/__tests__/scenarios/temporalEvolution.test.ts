@@ -20,8 +20,6 @@ import {
   expectNoZikah,
   expectIsYevama,
   expectNotYevama,
-  expectMarriagePermitted,
-  expectMarriageForbidden,
 } from '@/test/assertions';
 import { DEFAULT_PROFILE } from '@/test/profiles';
 import { createStatusEngine } from '@/halacha/statusEngine';

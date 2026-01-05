@@ -16,6 +16,7 @@ export type { PatternMatchResult } from './patternMatcher';
 
 // Zikah Tracker
 export { ZikahTracker, createZikahTracker, hasZikah } from './zikahTracker';
+export type { ErvahChecker } from './zikahTracker';
 
 // Status Engine
 export {

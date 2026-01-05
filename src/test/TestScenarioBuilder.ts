@@ -23,7 +23,6 @@ import {
   Person,
   Relationship,
   TimeSlice,
-  TemporalEvent,
   RelationshipType,
   NODE_COLOR_PALETTE,
 } from '@/types';

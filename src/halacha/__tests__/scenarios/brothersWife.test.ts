@@ -16,11 +16,10 @@
  * - Zikah allows marriage despite the ervah status
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { scenario, TestScenarioBuilder } from '@/test/TestScenarioBuilder';
+import { describe, it } from 'vitest';
+import { scenario } from '@/test/TestScenarioBuilder';
 import {
   expectStatus,
-  expectNoStatus,
   expectZikah,
   expectNoZikah,
   expectIsYevama,

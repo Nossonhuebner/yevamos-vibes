@@ -79,15 +79,34 @@ interface ZikahRecord {
 // Zikah Tracker Class
 // ═══════════════════════════════════════════════════════════════════════════
 
+/**
+ * Function type for checking if two people have an ervah relationship.
+ * Used to filter out brothers who are arayos when creating zikah.
+ */
+export type ErvahChecker = (
+  personA: string,
+  personB: string,
+  sliceIndex: number
+) => boolean;
+
 export class ZikahTracker {
   private graph: TemporalGraph;
   private engine: GraphQueryEngine;
   private zikahRecords: ZikahRecord[] = [];
   private initialized = false;
+  private ervahChecker?: ErvahChecker;
 
   constructor(graph: TemporalGraph) {
     this.graph = graph;
     this.engine = new GraphQueryEngine(graph);
+  }
+
+  /**
+   * Set the ervah checker function.
+   * This is called by StatusEngine after construction to avoid circular dependencies.
+   */
+  setErvahChecker(checker: ErvahChecker): void {
+    this.ervahChecker = checker;
   }
 
   /**
@@ -186,11 +205,22 @@ export class ZikahTracker {
       // Check if wife was alive at death
       if (!this.engine.wasAliveWhen(wifeId, deathEvent)) continue;
 
+      // Filter out brothers who are arayos to the yevama
+      // (e.g., if wife is brother's daughter, he cannot perform yibum)
+      const nonErvahBrothers = this.ervahChecker
+        ? eligibleBrothers.filter(
+            (b) => !this.ervahChecker!(wifeId, b.id, deathEvent.sliceIndex)
+          )
+        : eligibleBrothers;
+
+      // Only create zikah if there are non-ervah brothers
+      if (nonErvahBrothers.length === 0) continue;
+
       this.zikahRecords.push({
         yevama: wifeId,
         deceasedHusband: deceasedId,
         marriageEdgeId: marriage.id,
-        yevamim: eligibleBrothers.map((b) => b.id),
+        yevamim: nonErvahBrothers.map((b) => b.id),
         createdAt: deathEvent,
         createdAtSlice: deathEvent.sliceIndex,
         status: 'shomeres-yavam',

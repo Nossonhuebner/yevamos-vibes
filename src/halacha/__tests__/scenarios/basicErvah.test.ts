@@ -181,7 +181,6 @@ describe('Basic Ervah Relationships', () => {
 
       const husbandId = builder.getPersonId('husband');
       const sisterId = builder.getPersonId('sister');
-      const wifeId = builder.getPersonId('wife');
 
       // At slice 0: Wife's sister is ervah
       expectStatus(engine, husbandId, sisterId, 0, DEFAULT_PROFILE, 'ervah-doraita');
